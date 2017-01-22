@@ -1,0 +1,750 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Java,Spring,Spring MVC," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="引言前一阵公司的项目用到Spring MVC，看了官方文档，跑了几个Demo就可以使用了，很简单。但是，它一直像个黑盒一样，我并不知道它内部是如何工作的，这几天一直在研究它的源码，今天已经把它的工作原理弄清了，因此把我的这个研究过程记录下来。现在让我们进入源码的世界，来看看这个黑盒中到底有什么神奇的东西。
+spring MVC 总览学一门新的知识，首先要大致了解它的全貌，然后在深入自己感兴趣的细节">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring MVC源码剖析">
+<meta property="og:url" content="http://Xurtle.me/Spring-MVC源码剖析/index.html">
+<meta property="og:site_name" content="Xurtle">
+<meta property="og:description" content="引言前一阵公司的项目用到Spring MVC，看了官方文档，跑了几个Demo就可以使用了，很简单。但是，它一直像个黑盒一样，我并不知道它内部是如何工作的，这几天一直在研究它的源码，今天已经把它的工作原理弄清了，因此把我的这个研究过程记录下来。现在让我们进入源码的世界，来看看这个黑盒中到底有什么神奇的东西。
+spring MVC 总览学一门新的知识，首先要大致了解它的全貌，然后在深入自己感兴趣的细节">
+<meta property="og:image" content="http://Xurtle.me/Spring-MVC源码剖析/1st.png">
+<meta property="og:image" content="http://Xurtle.me/Spring-MVC源码剖析/2nd.png">
+<meta property="og:image" content="http://Xurtle.me/Spring-MVC源码剖析/3rd.png">
+<meta property="og:updated_time" content="2016-10-30T02:42:25.047Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring MVC源码剖析">
+<meta name="twitter:description" content="引言前一阵公司的项目用到Spring MVC，看了官方文档，跑了几个Demo就可以使用了，很简单。但是，它一直像个黑盒一样，我并不知道它内部是如何工作的，这几天一直在研究它的源码，今天已经把它的工作原理弄清了，因此把我的这个研究过程记录下来。现在让我们进入源码的世界，来看看这个黑盒中到底有什么神奇的东西。
+spring MVC 总览学一门新的知识，首先要大致了解它的全貌，然后在深入自己感兴趣的细节">
+<meta name="twitter:image" content="http://Xurtle.me/Spring-MVC源码剖析/1st.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://Xurtle.me/Spring-MVC源码剖析/"/>
+
+  <title> Spring MVC源码剖析 | Xurtle </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Xurtle</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring MVC源码剖析
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-29T22:07:00+08:00" content="2016-10-29">
+              2016-10-29
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/Spring-MVC源码剖析/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="Spring-MVC源码剖析/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>前一阵公司的项目用到Spring MVC，看了官方文档，跑了几个Demo就可以使用了，很简单。但是，它一直像个黑盒一样，我并不知道它内部是如何工作的，这几天一直在研究它的源码，今天已经把它的工作原理弄清了，因此把我的这个研究过程记录下来。现在让我们进入源码的世界，来看看这个黑盒中到底有什么神奇的东西。</p>
+<h1 id="spring-MVC-总览"><a href="#spring-MVC-总览" class="headerlink" title="spring MVC 总览"></a>spring MVC 总览</h1><p><strong>学一门新的知识，首先要大致了解它的全貌，然后在深入自己感兴趣的细节。</strong>那么在这一小节中，我不会去深入具体的细节了解spring MVC，而是去了解它大致的流程，它是如何工作起来的。首先，让我们先看看下面这张流程图。</p>
+<img src="/Spring-MVC源码剖析/1st.png" alt="spring MVC 流程图" title="spring MVC 流程图">
+<p>图片来源：我从<a href="https://images.google.com/" target="_blank" rel="external">Google Image</a>中找到的。</p>
+<a id="more"></a>
+<p>在接下来的文章中我会去深入源码来解释上图中的各个过程，现在大家对这张图有个概念就行。相信用过spring MVC的人都知道，客户端的请求要通过前端控制器(<code>DispatcherServlet</code>)，然后前端控制器去找到请求相应的<code>Controller</code>.  因此我们可以猜到前端控制器一定要在<code>Servlet</code>容器启动时被实例化，所以我们需要把<code>DispatcherServlet</code>配置到web.xml文件中，部分配置如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">servlet</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>spring<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-class</span>&gt;</span>org.springframework.web.servlet.DispatcherServlet<span class="tag">&lt;/<span class="name">servlet-class</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">init-param</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-value</span>&gt;</span>classpath:spring.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">init-param</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">load-on-startup</span>&gt;</span>1<span class="tag">&lt;/<span class="name">load-on-startup</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">servlet</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>如果你是Spring Team的一员，在实例化对象的时候，你会做些什么，大家好好想一想？Spring Team 一定会把一些后续要用到的东西进行初始化。接下来，让我们进入源码的世界吧，一层层揭开Spring MVC的面纱。</p>
+<h1 id="DispatcherServlet的实例化之旅"><a href="#DispatcherServlet的实例化之旅" class="headerlink" title="DispatcherServlet的实例化之旅"></a>DispatcherServlet的实例化之旅</h1><p>在这一小节中，我会通过查看Spring MVC的源码来看看在DispatcherServlet实例化的过程中，Spring到底初始化了一些什么的东西。</p>
+<h2 id="DispatcherServlet中的静态代码块"><a href="#DispatcherServlet中的静态代码块" class="headerlink" title="DispatcherServlet中的静态代码块"></a>DispatcherServlet中的静态代码块</h2><p>源码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * Name of the class path resource (relative to the DispatcherServlet class)</div><div class="line"> * that defines DispatcherServlet&apos;s default strategy names.</div><div class="line"> */</div><div class="line">private static final String DEFAULT_STRATEGIES_PATH = &quot;DispatcherServlet.properties&quot;;</div><div class="line">private static final Properties defaultStrategies;</div><div class="line"></div><div class="line">static &#123;</div><div class="line">	// Load default strategy implementations from properties file.</div><div class="line">	// This is currently strictly internal and not meant to be customized</div><div class="line">	// by application developers.</div><div class="line">	try &#123;</div><div class="line">		ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);</div><div class="line">		defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);</div><div class="line">	&#125;</div><div class="line">	catch (IOException ex) &#123;</div><div class="line">		throw new IllegalStateException(&quot;Could not load &apos;DispatcherServlet.properties&apos;: &quot; + ex.getMessage());</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当一个类被JVM加载、链接过后，JVM会调用类构造器会初始化一些静态域对象。因此上面的静态代码块会被执行，其中的代码只有一个目的，那就是从属性文件中加载默认的strategy实现，最后赋值给<code>defaultStrategies</code> 变量。上面的注释也说明了属性文件的位置，大家可以用解压工具把spring-webmvc jar包用解压工具打开。我打开结果如下图：</p>
+<img src="/Spring-MVC源码剖析/2nd.png" alt="DispatcherServlet.properties" title="DispatcherServlet.properties">
+<p>大家可以打开<code>DispatcherServlet.properties</code> 文件，可以看到如下内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"># Default implementation classes for DispatcherServlet&apos;s strategy interfaces.</div><div class="line"># Used as fallback when no matching beans are found in the DispatcherServlet context.</div><div class="line"># Not meant to be customized by application developers.</div><div class="line"></div><div class="line">org.springframework.web.servlet.LocaleResolver=org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver</div><div class="line"></div><div class="line">org.springframework.web.servlet.ThemeResolver=org.springframework.web.servlet.theme.FixedThemeResolver</div><div class="line"></div><div class="line">org.springframework.web.servlet.HandlerMapping=org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping,\</div><div class="line">	org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping</div><div class="line"></div><div class="line">org.springframework.web.servlet.HandlerAdapter=org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter,\</div><div class="line">	org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter,\</div><div class="line">	org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter</div><div class="line"></div><div class="line">org.springframework.web.servlet.HandlerExceptionResolver=org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerExceptionResolver,\</div><div class="line">	org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver,\</div><div class="line">	org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver</div><div class="line"></div><div class="line">org.springframework.web.servlet.RequestToViewNameTranslator=org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator</div><div class="line"></div><div class="line">org.springframework.web.servlet.ViewResolver=org.springframework.web.servlet.view.InternalResourceViewResolver</div><div class="line"></div><div class="line">org.springframework.web.servlet.FlashMapManager=org.springframework.web.servlet.support.SessionFlashMapManager</div></pre></td></tr></table></figure>
+<p>相信大家一定熟悉里面的一些类吧，别着急，下面会用到这些东西，大家现在有个印象就行。在context成功的refresh过后，<code>onRefresh</code> 方法就会被调用，然后它会调用<code>initStrategies</code> 方法。下面让我们来看看<code>initStrategies</code> 方法具体都初始化哪些strategy对象。</p>
+<h2 id="strategy对象的初始化"><a href="#strategy对象的初始化" class="headerlink" title="strategy对象的初始化"></a>strategy对象的初始化</h2><p>源码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">/**</div><div class="line"> * Initialize the strategy objects that this servlet uses.</div><div class="line"> * &lt;p&gt;May be overridden in subclasses in order to initialize further strategy objects.</div><div class="line"> */</div><div class="line">protected void initStrategies(ApplicationContext context) &#123;</div><div class="line">	initMultipartResolver(context);</div><div class="line">	initLocaleResolver(context);</div><div class="line">	initThemeResolver(context);</div><div class="line">	initHandlerMappings(context);</div><div class="line">	initHandlerAdapters(context);</div><div class="line">	initHandlerExceptionResolvers(context);</div><div class="line">	initRequestToViewNameTranslator(context);</div><div class="line">	initViewResolvers(context);</div><div class="line">	initFlashMapManager(context);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对于上面的各个初始化方法，我只讲解几个与我们开发者最密切的初始化方法，它们分别是<code>initHandlerMappings</code> <code>initHandlerAdapters</code> <code>initHandlerExceptionResolvers</code> <code>initViewResolvers</code>。 如果大家对其它方法感兴趣，自己去查看一下相应的源码。下面让我们来深入各个初始化方法的细节。</p>
+<h3 id="initHandlerMappings-方法"><a href="#initHandlerMappings-方法" class="headerlink" title="initHandlerMappings 方法"></a>initHandlerMappings 方法</h3><p>这个方法的作用是初始化我们程序将要用到的HandlerMapping对象，下面让我们来看看源码。源码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** List of HandlerMappings used by this servlet */</span></div><div class="line"><span class="keyword">private</span> List&lt;HandlerMapping&gt; handlerMappings;</div><div class="line"></div><div class="line"><span class="comment">/** Detect all HandlerMappings or just expect "handlerMapping" bean? */</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">boolean</span> detectAllHandlerMappings = <span class="keyword">true</span>;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Initialize the HandlerMappings used by this class.</div><div class="line"> * &lt;p&gt;If no HandlerMapping beans are defined in the BeanFactory for this namespace,</div><div class="line"> * we default to BeanNameUrlHandlerMapping.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initHandlerMappings</span><span class="params">(ApplicationContext context)</span> </span>&#123;</div><div class="line">	<span class="keyword">this</span>.handlerMappings = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.detectAllHandlerMappings) &#123;</div><div class="line">		<span class="comment">// Find all HandlerMappings in the ApplicationContext, including ancestor contexts.</span></div><div class="line">		Map&lt;String, HandlerMapping&gt; matchingBeans =</div><div class="line">				BeanFactoryUtils.beansOfTypeIncludingAncestors(context, HandlerMapping.class, <span class="keyword">true</span>, <span class="keyword">false</span>);</div><div class="line">		<span class="keyword">if</span> (!matchingBeans.isEmpty()) &#123;</div><div class="line">			<span class="keyword">this</span>.handlerMappings = <span class="keyword">new</span> ArrayList&lt;HandlerMapping&gt;(matchingBeans.values());</div><div class="line">			<span class="comment">// We keep HandlerMappings in sorted order.</span></div><div class="line">			OrderComparator.sort(<span class="keyword">this</span>.handlerMappings);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> &#123;</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">			HandlerMapping hm = context.getBean(HANDLER_MAPPING_BEAN_NAME, HandlerMapping.class);</div><div class="line">			<span class="keyword">this</span>.handlerMappings = Collections.singletonList(hm);</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</div><div class="line">			<span class="comment">// Ignore, we'll add a default HandlerMapping later.</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="comment">// Ensure we have at least one HandlerMapping, by registering</span></div><div class="line">	<span class="comment">// a default HandlerMapping if no other mappings are found.</span></div><div class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.handlerMappings == <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">this</span>.handlerMappings = getDefaultStrategies(context, HandlerMapping.class);</div><div class="line">		<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</div><div class="line">			logger.debug(<span class="string">"No HandlerMappings found in servlet '"</span> + getServletName() + <span class="string">"': using default"</span>);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在了解上面代码的意义之前，让我们来看看我的<code>spring.xml</code> 文件中都配置了什么。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">context:component-scan</span> <span class="attr">base-package</span>=<span class="string">"me.xurtle"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">bean</span> <span class="attr">class</span>=<span class="string">"org.springframework.web.servlet.view.InternalResourceViewResolver"</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"prefix"</span> <span class="attr">value</span>=<span class="string">"/"</span> /&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">property</span> <span class="attr">name</span>=<span class="string">"suffix"</span> <span class="attr">value</span>=<span class="string">".jsp"</span> /&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">bean</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>大家可以看到，我没有在spring的配置文件配置任何的HandlerMapping对象。从上面的代码我们可以看出<code>detectAllHandlerMappings</code> 默认为true，也就是默认会去检测配置文件中所有的HandlerMapping，接下来是<code>beansOfTypeIncludingAncestors</code> 方法，如果你去查看这个方法的源码，你会看到它的第一个参数给定的是<code>ListableBeanFactory</code> 接口，对于这个接口的实现类来说，它可以枚举出所有定义的bean实例，而不是仅仅可以通过bean名称去获得定义的bean实例。那么<code>beansOfTypeIncludingAncestors</code> 具体的做法就是枚举出所有定义的bean，筛选出给定类型或其子类的bean，如果第一个参数是<code>HierarchicalBeanFactory</code> 的子类，它也会去查找父类工厂中的HandlerMapping，最后返回一个<code>Map</code> 对象。</p>
+<p>如果返回的<code>Map</code> 对象中存在HandlerMapping对象，那么接下来会把这些对象存入到<code>ArrayList</code> 中。同样它也会保持HandlerMapping对象在集合中的顺序，大家可能会觉得奇怪，为什么要保持这些对象的顺序呢？其实很简单，等我下面分析到映射请求的时候，大家就会明白了。</p>
+<p>如果一直都没有获得到HandlerMapping对象，那么接下来的<code>getDefaultStrategies</code> 方法会给我们生成一些默认的HandlerMapping对象。其实这个方法也很简单，它其实就是用我们给定的strategy对象接口的名字作为key，接着去属性文件中加载对应的值。而这个属性文件就是上面我分析的静态代码块中初始化的那个属性文件。接着它会用<code>StringUtils</code> 工具类把拿到的value根据逗号分开存入到<code>String</code> 数组中，然后遍历这些名字，根据相应的名字加载相应的类，创建相应的对象。不得不说，这个方法的实现真的很好，它只写这一个方法，就可以加载不同的strategy对象，实现了代码的重用，值得我们学习。</p>
+<p>如果你Debug一下程序，你可以看到<code>handlerMappings</code> 列表中其实有两个实例，第一个是<code>BeanNameUrlHandlerMapping</code> ，第二个是<code>DefaultAnnotationHandlerMapping</code> ，就象我前面说的那样，Spring MVC会使用列表中的第一个对象，即<code>BeanNameUrlHandlerMapping</code> 的对象，如果通过这个对象并没有找到相应的handler，然后才会使用<code>DefaultAnnotationHandlerMapping</code> 的对象。</p>
+<p>至此，我们还一个逻辑没有介绍。如果想让<code>initHandlerMappings</code> 方法走这个逻辑，我们需要把<code>detectAllHandlerMappings</code> 设置为<code>false</code>. 其实这个很简单，只要在<code>web.xml</code> 文件中配置一下就行了。部分代码如下：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">servlet</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-name</span>&gt;</span>spring<span class="tag">&lt;/<span class="name">servlet-name</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">servlet-class</span>&gt;</span>org.springframework.web.servlet.DispatcherServlet<span class="tag">&lt;/<span class="name">servlet-class</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">init-param</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-name</span>&gt;</span>contextConfigLocation<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-value</span>&gt;</span>classpath:spring.xml<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">init-param</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">init-param</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-name</span>&gt;</span>detectAllHandlerMappings<span class="tag">&lt;/<span class="name">param-name</span>&gt;</span></div><div class="line">		<span class="tag">&lt;<span class="name">param-value</span>&gt;</span>false<span class="tag">&lt;/<span class="name">param-value</span>&gt;</span></div><div class="line">	<span class="tag">&lt;/<span class="name">init-param</span>&gt;</span></div><div class="line">	<span class="tag">&lt;<span class="name">load-on-startup</span>&gt;</span>1<span class="tag">&lt;/<span class="name">load-on-startup</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">servlet</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>除了上面的代码外，我们还需要在<code>spring.xml</code> 文件中定义一个HandlerMapping，部分代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;bean name=&quot;handlerMapping&quot; class=&quot;org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping&quot; /&gt;</div></pre></td></tr></table></figure>
+<p><strong>你的bean名称一定为<code>handlerMapping</code> ，不可以是其它的值。</strong>如果你把这个名称指定为其它的值，Spring框架不能得到这个bean，它依然会给你默认的HandlerMapping对象。</p>
+<p><strong>总结：通过上面源码的分析可以看出，在spring配置文件中明确指定一个bean名称为<code>handlerMapping</code> 的做法更有效，因为它不需要去遍历配置文件中所有的bean，所以这个做法会加快initHandlerMappings方法的执行。</strong> </p>
+<h3 id="initHandlerAdapters-方法"><a href="#initHandlerAdapters-方法" class="headerlink" title="initHandlerAdapters 方法"></a>initHandlerAdapters 方法</h3><p>这个方法的作用是初始化我们程序将要用到的HandlerAdapter对象，下面让我们来看看源码。源码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/** List of HandlerAdapters used by this servlet */</span></div><div class="line"><span class="keyword">private</span> List&lt;HandlerAdapter&gt; handlerAdapters;</div><div class="line"></div><div class="line"><span class="comment">/** Detect all HandlerAdapters or just expect "handlerAdapter" bean? */</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">boolean</span> detectAllHandlerAdapters = <span class="keyword">true</span>;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Initialize the HandlerAdapters used by this class.</div><div class="line"> * &lt;p&gt;If no HandlerAdapter beans are defined in the BeanFactory for this namespace,</div><div class="line"> * we default to SimpleControllerHandlerAdapter.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initHandlerAdapters</span><span class="params">(ApplicationContext context)</span> </span>&#123;</div><div class="line">	<span class="keyword">this</span>.handlerAdapters = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.detectAllHandlerAdapters) &#123;</div><div class="line">		<span class="comment">// Find all HandlerAdapters in the ApplicationContext, including ancestor contexts.</span></div><div class="line">		Map&lt;String, HandlerAdapter&gt; matchingBeans =</div><div class="line">				BeanFactoryUtils.beansOfTypeIncludingAncestors(context, HandlerAdapter.class, <span class="keyword">true</span>, <span class="keyword">false</span>);</div><div class="line">		<span class="keyword">if</span> (!matchingBeans.isEmpty()) &#123;</div><div class="line">			<span class="keyword">this</span>.handlerAdapters = <span class="keyword">new</span> ArrayList&lt;HandlerAdapter&gt;(matchingBeans.values());</div><div class="line">			<span class="comment">// We keep HandlerAdapters in sorted order.</span></div><div class="line">			OrderComparator.sort(<span class="keyword">this</span>.handlerAdapters);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">else</span> &#123;</div><div class="line">		<span class="keyword">try</span> &#123;</div><div class="line">			HandlerAdapter ha = context.getBean(HANDLER_ADAPTER_BEAN_NAME, HandlerAdapter.class);</div><div class="line">			<span class="keyword">this</span>.handlerAdapters = Collections.singletonList(ha);</div><div class="line">		&#125;</div><div class="line">		<span class="keyword">catch</span> (NoSuchBeanDefinitionException ex) &#123;</div><div class="line">			<span class="comment">// Ignore, we'll add a default HandlerAdapter later.</span></div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line"></div><div class="line">	<span class="comment">// Ensure we have at least some HandlerAdapters, by registering</span></div><div class="line">	<span class="comment">// default HandlerAdapters if no other adapters are found.</span></div><div class="line">	<span class="keyword">if</span> (<span class="keyword">this</span>.handlerAdapters == <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">this</span>.handlerAdapters = getDefaultStrategies(context, HandlerAdapter.class);</div><div class="line">		<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</div><div class="line">			logger.debug(<span class="string">"No HandlerAdapters found in servlet '"</span> + getServletName() + <span class="string">"': using default"</span>);</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>看完上面的代码是否有种似曾相识的感觉？对的，上面代码的逻辑和<code>initHandlerMappings</code> 一样，同样的你可以设置<code>detectAllHandlerAdapters</code> 来改变代码的逻辑，你也可以看看我上面给你的默认strategy属性文件，就可以知道Spring MVC给你加载了哪些默认的HandlerAdapter对象。只要你理解了我上面<code>initHandlerMappings</code> 方法的分析，这个方法就没有什么可说的了，和它一样。</p>
+<h3 id="initHandlerExceptionResolvers-方法"><a href="#initHandlerExceptionResolvers-方法" class="headerlink" title="initHandlerExceptionResolvers 方法"></a>initHandlerExceptionResolvers 方法</h3><p>这个方法中初始化的对象都为<code>HandlerExceptionResolver</code> 的子类，对于Controller中出现的异常，会调用 <code>processHandlerException</code>方法来统一处理异常。稍后我会详细介绍这些对象在处理异常时扮演的角色，大家现在有个印象就行。还有一点大家应该注意的就是，如果你自己并没有定义一个处理<code>HandlerExceptionResolver</code> 的子类来处理异常，即使Spring MVC给你加载了默认的子类，它们也不会帮你处理异常的。这个方法的执行逻辑和上面的一样，这里我也就不多说了。</p>
+<h3 id="initViewResolvers-方法"><a href="#initViewResolvers-方法" class="headerlink" title="initViewResolvers 方法"></a>initViewResolvers 方法</h3><p>逻辑依然和上面的初始化方法一样，你可以实现<code>ViewResolver</code> 接口来定义自己的解析视图的方法。如果你并没有指定自己的类，那么默认的类为 <code>InternalResourceViewResolver</code>. </p>
+<h1 id="DispatcherServlet如何“统领指挥”？"><a href="#DispatcherServlet如何“统领指挥”？" class="headerlink" title="DispatcherServlet如何“统领指挥”？"></a>DispatcherServlet如何“统领指挥”？</h1><p>上面的初始化方法都是为真正的“战役”做准备的。在这一小节中，我会带大家看看DispatcherServlet是如何调动“千军万马”来打仗（处理来自客户端的请求）的。</p>
+<p>正如它的名字一样，<code>DispatcherServlet</code> 也是一个<code>Servlet</code>，它间接继承自<code>HttpServlet</code> ，它也重写了<code>doService</code> 方法。当从客户端发出一个请求时，它会首先执行它的<code>doService</code> 方法，如果大家去看看这个方法，它其实就是在<code>requset</code> 域中发布一些属性，然后调用<code>doDispatch</code> 方法。这个方法才是实际做事情的方法。</p>
+<p>下面，来让我们看看<code>doDispatch</code> 方法的真面目吧。由于这个方法中涉及到的方法很多并且它本身的方法也很长，因此在这一小节中我不会整段整段的复制代码，而是抽出重要的代码片段，对于一些方法来说，我也会去除掉一些没有用的代码，比如记录日志的代码。因此我建议大家打开自己的源码结合着下文一起看。</p>
+<h2 id="找到当前请求的handler"><a href="#找到当前请求的handler" class="headerlink" title="找到当前请求的handler"></a>找到当前请求的handler</h2><p>从下面的代码中可以看到，<code>doDispatch</code> 方法中调用<code>getHandler</code> 方法找到相应请求的Handler，奇怪的是，返回的是一个<code>HandlerExecutionChain</code>对象，其实它很好理解，只不过是框架把找到的Handler（即我们处理请求的Controller）和一些个拦截器包装到这个对象中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">HandlerExecutionChain mappedHandler = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">mappedHandler = getHandler(processedRequest, <span class="keyword">false</span>);</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Return the HandlerExecutionChain for this request.</div><div class="line"> * &lt;p&gt;Tries all handler mappings in order.</div><div class="line"> * <span class="doctag">@param</span> request current HTTP request</div><div class="line"> * <span class="doctag">@return</span> the HandlerExecutionChain, or &lt;code&gt;null&lt;/code&gt; if no handler could be found</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">protected</span> HandlerExecutionChain <span class="title">getHandler</span><span class="params">(HttpServletRequest request)</span> <span class="keyword">throws</span> Exception </span>&#123;</div><div class="line">	<span class="keyword">for</span> (HandlerMapping hm : <span class="keyword">this</span>.handlerMappings) &#123;</div><div class="line">		HandlerExecutionChain handler = hm.getHandler(request);</div><div class="line">		<span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</div><div class="line">			<span class="keyword">return</span> handler;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> <span class="keyword">null</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面代码中的<code>getHandler</code>方法实际就是遍历你上面初始化的<code>HandlerMapping</code> 对象，然后用其找到相应的Handler，大家可以看到它的返回值实际是<code>HandlerExecutionChain</code> 对象，如果大家继续Debug程序，它其实会把你定义的Handler和拦截器包装起来，一并返回。</p>
+<p>还有一点我想强调的是，每个<code>HandlerMapping</code> 找到<code>Controller</code> 的方式不同，如果大家自己跟踪一下断点，发现无论哪个<code>HandlerMapping</code> 最终都会到<code>AbstractUrlHandlerMapping</code> 类中的<code>lookupHandler</code> 方法，这个类中其实还有个私有变量<code>handlerMap</code> ，这个变量在容器启动的时候，Spring MVC已经把URL作为key，对应的Controller作为value存入到这个变量中。下面我给大家举个例子，假设现在我们定义的<code>HandlerMapping</code> 为<code>DefaultAnnotationHandlerMapping</code> 对象，下面我来介绍一下它映射URL到Controller大致的流程。</p>
+<ol>
+<li>当<code>Servlet</code>容器启动时，Spring MVC会实例化你所有定义的Bean，当然这绝对包括<code>DefaultAnnotationHandlerMapping</code> 对象</li>
+<li>在实例化的过程中，它会调用<code>AbstractDetectingUrlHandlerMapping</code> 中的<code>detectHandlers</code> 方法，这个方法中会遍历你所有的Bean对象，甚至都会包括<code>DefaultAnnotationHandlerMapping</code> 对象，从而找到URL以及相对应的Handler</li>
+<li>在第2步中的<code>detectHandlers</code> 方法中有一个<code>determineUrlsForHandler</code> 方法，这个方法有主要作用是为给定的bean找到相应的URL，这个方法是抽象的，因此它会分派给具体的子类做这件事情，因为我用的是<code>DefaultAnnotationHandlerMapping</code> 对象，所以会调用它里面的<code>determineUrlsForHandler</code> 方法</li>
+<li><code>DefaultAnnotationHandlerMapping</code> 中的 <code>determineUrlsForHandler</code> 方法首先会查看你给定的bean对象上是否有<code>RequestMapping</code> 注解，然后会调用<code>determineUrlsForHandlerMethods</code> 方法查找你这个bean中的方法上是否有<code>RequestMapping</code> 注解</li>
+<li>如果在第4步中得到了一个URL和Controller的映射，那么<code>AbstractDetectingUrlHandlerMapping</code> 中的<code>detectHandlers</code> 方法会调用<code>AbstractUrlHandlerMapping</code> 中的 <code>registerHandler</code> 方法，把这个映射会放入它的域变量<code>handlerMap</code> 中</li>
+</ol>
+<p>从上面的步骤中可以看出，Spring MVC在容器启动完毕以后就已经把所有的URL和Controller的映射放入到<code>AbstractUrlHandlerMapping</code> 中的<code>handlerMap</code> 域变量中，当请求到来时，它用URL当作key来取得对应的Controller就行了。<code>BeanNameUrlHandlerMapping</code> 和 <code>DefaultAnnotationHandlerMapping</code> 是同样的道理，只不过它们的<code>determineUrlsForHandler</code> 方法不同。</p>
+<p><code>SimpleUrlHandlerMapping</code> 这个类有点和它们不一样，它是基于配置把URL与Controller对应起来，而不是用<code>determineUrlsForHandler</code> 方法来获取映射。剩下的步骤就一样了，用它里面的<code>registerHandlers</code> 方法把这些映射注册到它的父类<code>AbstractUrlHandlerMapping</code> 中。还有一些其它的<code>HandlerMapping</code> 都是大同小异，这里我就不过多解释了。</p>
+<h2 id="找到HandlerAdapter"><a href="#找到HandlerAdapter" class="headerlink" title="找到HandlerAdapter"></a>找到HandlerAdapter</h2><p>上面已经根据URL找到相应的<code>Handler</code>，接下来我们需要找到与当前Handler相匹配的<code>HandlerAdapter</code> 来调用方法处理请求。大家可能会想，我们已经找到了相应的<code>Handler</code>， 直接调用它里面的方法处理请求不就行了吗？这样做是肯定不行的。如果大家对Spring MVC熟悉的话，就会知道定义一个<code>Controller</code> 可以有要多种多样的方式。比如，我们可以实现<code>Controller</code> 接口，也可以用注解的方式来定义<code>Controller</code>， 因此不同的定义方式会导致不同的调用方式。现在让我们来看看源码是怎么做的吧。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Return the HandlerAdapter for this handler object.</div><div class="line"> * <span class="doctag">@param</span> handler the handler object to find an adapter for</div><div class="line"> * <span class="doctag">@throws</span> ServletException if no HandlerAdapter can be found for the handler. This is a fatal error.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">protected</span> HandlerAdapter <span class="title">getHandlerAdapter</span><span class="params">(Object handler)</span> <span class="keyword">throws</span> ServletException </span>&#123;</div><div class="line">	<span class="keyword">for</span> (HandlerAdapter ha : <span class="keyword">this</span>.handlerAdapters) &#123;</div><div class="line">		<span class="keyword">if</span> (ha.supports(handler)) &#123;</div><div class="line">			<span class="keyword">return</span> ha;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>源码看起来很简单，调用<code>getHandlerAdapter</code> 方法就可以得到一个<code>HandlerAdapter</code>， 但是实际上并没有这么简单。这个方法就是遍历集合中的<code>HandlerAdapter</code>， 找到支持当前<code>Handler</code> 的一个<code>HandlerAdapter</code> ，那么怎么才算支持呢？实际上不同的<code>HandlerAdapter</code> 所支持的方式不一样。下面，我拿出2个（<code>AnnotationMethodHandlerAdapter</code> 和 <code>SimpleControllerHandlerAdapter</code>）大家最熟悉的<code>HandlerAdapter</code> 的子类来看看到底哪里不一样？</p>
+<p>如果是<code>SimpleControllerHandlerAdapter</code>，这个就很简单了，它的<code>supports</code> 方法只是去看看当前的<code>Handler</code> 是否为<code>Controller</code> 接口的实例，如果是就支持。</p>
+<p>如果是<code>AnnotationMethodHandlerAdapter</code>，这个就有点复杂了。下面是具体的源码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="keyword">final</span> Map&lt;Class&lt;?&gt;, ServletHandlerMethodResolver&gt; methodResolverCache =</div><div class="line">		<span class="keyword">new</span> ConcurrentHashMap&lt;Class&lt;?&gt;, ServletHandlerMethodResolver&gt;();</div><div class="line">			</div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">supports</span><span class="params">(Object handler)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> getMethodResolver(handler).hasHandlerMethods();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Build a HandlerMethodResolver for the given handler type.</div><div class="line"> */</div><div class="line"><span class="function"><span class="keyword">private</span> ServletHandlerMethodResolver <span class="title">getMethodResolver</span><span class="params">(Object handler)</span> </span>&#123;</div><div class="line">	Class handlerClass = ClassUtils.getUserClass(handler);</div><div class="line">	ServletHandlerMethodResolver resolver = <span class="keyword">this</span>.methodResolverCache.get(handlerClass);</div><div class="line">	<span class="keyword">if</span> (resolver == <span class="keyword">null</span>) &#123;</div><div class="line">		<span class="keyword">synchronized</span> (<span class="keyword">this</span>.methodResolverCache) &#123;</div><div class="line">			resolver = <span class="keyword">this</span>.methodResolverCache.get(handlerClass);</div><div class="line">			<span class="keyword">if</span> (resolver == <span class="keyword">null</span>) &#123;</div><div class="line">				resolver = <span class="keyword">new</span> ServletHandlerMethodResolver(handlerClass);</div><div class="line">				<span class="keyword">this</span>.methodResolverCache.put(handlerClass, resolver);</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">	<span class="keyword">return</span> resolver;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在理解上面的代码之前，让我们先看看<code>ServletHandlerMethodResolver</code> 和 <code>HandlerMethodResolver</code> 这2个类。<code>ServletHandlerMethodResolver</code> 是 <code>AnnotationMethodHandlerAdapter</code> 的内部类，它继承了<code>HandlerMethodResolver</code>。</p>
+<p>在实例化<code>ServletHandlerMethodResolver</code> 的同时，它会调用<code>HandlerMethodResolver</code> 中的<code>init()</code>方法，在这个<code>init()</code>方法中会解析所有带有<code>RequestMapping</code> 注解的方法，并把它存入到它的域变量<code>handlerMethods</code>中。 每个<code>Handler</code> 都对应着一个<code>ServletHandlerMethodResolver</code> 实例，这个实例中包含着一切关于当前<code>Handler</code> 中的方法信息。</p>
+<p>那么上面代码中的<code>supports</code> 方法首先做的就是调用<code>getMethodResolver</code> 方法，用一个<code>Handler</code> 实例去获取其对应的一个<code>ServletHandlerMethodResolver</code> 实例，如果存在这个实例，直接返回，如果不存在，新建一个实例，并把它放入到<code>Map</code> 缓存中。P.S. <code>getMethodResolver</code> 方法的同步代码写的很漂亮，直得学习。</p>
+<p>总结来说，当第一次用到<code>Handler</code> 中的方法处理请求时，它会一次性解析里面会用到的方法，存到一个<code>ServletHandlerMethodResolver</code> 实例（当然了，这个实例不仅仅只有这些信息），然后用这个<code>Handler</code> 类作为key，用<code>ServletHandlerMethodResolver</code> 实例作为value存入到<code>Map</code> 缓存中，等到下一个请求再一次用到这个<code>Handler</code> 中的方法时，它直接从这个缓存中取得相应的信息就ok了。</p>
+<h2 id="应用注册拦截器的preHandle-方法"><a href="#应用注册拦截器的preHandle-方法" class="headerlink" title="应用注册拦截器的preHandle 方法"></a>应用注册拦截器的<code>preHandle</code> 方法</h2><p>这一步没有什么好说的，大家自己看看下面的代码就全明白了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">int</span> interceptorIndex = -<span class="number">1</span>;</div><div class="line"></div><div class="line"><span class="comment">// Apply preHandle methods of registered interceptors.</span></div><div class="line">HandlerInterceptor[] interceptors = mappedHandler.getInterceptors();</div><div class="line"><span class="keyword">if</span> (interceptors != <span class="keyword">null</span>) &#123;</div><div class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; interceptors.length; i++) &#123;</div><div class="line">		HandlerInterceptor interceptor = interceptors[i];</div><div class="line">		<span class="keyword">if</span> (!interceptor.preHandle(processedRequest, response, mappedHandler.getHandler())) &#123;</div><div class="line">			triggerAfterCompletion(mappedHandler, interceptorIndex, processedRequest, response, <span class="keyword">null</span>);</div><div class="line">			<span class="keyword">return</span>;</div><div class="line">		&#125;</div><div class="line">		interceptorIndex = i;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>实际上，除了我们自己的拦截器外，Spring MVC还给了一个拦截器为<code>AbstractUrlHandlerMapping$PathExposingHandlerInterceptor</code></p>
+<h2 id="调用处理请求的方法"><a href="#调用处理请求的方法" class="headerlink" title="调用处理请求的方法"></a>调用处理请求的方法</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mv = ha.handle(processedRequest, response, mappedHandler.getHandler());</div></pre></td></tr></table></figure>
+<p>上面的代码用相应的<code>HandlerAdapter</code> 来调用<code>Handler</code> 来处理请求了并返回一个<code>ModelAndView</code> 对象。不同的<code>HandlerAdapter</code> 调用方式也不相同，对于上面我介绍的<code>SimpleControllerHandlerAdapter</code> 来说，它只是把<code>Handler</code> 强转成了一个<code>Controller</code> ，然后调用<code>handleRequest</code> 方法就行了。 对于<code>AnnotationMethodHandlerAdapter</code> 来说，如果你能理解上面“找到HandlerAdapter”的过程，相信这个也难不倒你。</p>
+<p><code>ModelAndView</code> 是什么呢？它仅仅是一个容器存储Model 和 View，它们是完全不相同的东西，这所以这样做的原因就是在<code>Controller</code> 当中可以用一个返回值同时返回Model 和 View，下面我来举个例子。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="meta">@Controller</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">HelloWorldController</span> </span>&#123;</div><div class="line">	<span class="meta">@RequestMapping</span>(<span class="string">"/hello"</span>)</div><div class="line">	<span class="function"><span class="keyword">public</span> ModelAndView <span class="title">helloWorld</span><span class="params">()</span> </span>&#123;</div><div class="line">		String message = <span class="string">"Hello Spring MVC"</span>;</div><div class="line">		<span class="keyword">return</span> <span class="keyword">new</span> ModelAndView(<span class="string">"index.jsp"</span>, <span class="string">"info"</span>, message);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面是我<code>Controller</code> 中的代码，它返回的View名称为<code>index.jsp</code>， 而Model为<code>{info=Hello Spring MVC}</code></p>
+<h2 id="应用注册拦截器的postHandle-方法"><a href="#应用注册拦截器的postHandle-方法" class="headerlink" title="应用注册拦截器的postHandle 方法"></a>应用注册拦截器的<code>postHandle</code> 方法</h2><p>这一步也没有什么好说的，大家自己看看下面的代码就全明白了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// Apply postHandle methods of registered interceptors.</span></div><div class="line"><span class="keyword">if</span> (interceptors != <span class="keyword">null</span>) &#123;</div><div class="line">	<span class="keyword">for</span> (<span class="keyword">int</span> i = interceptors.length - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</div><div class="line">		HandlerInterceptor interceptor = interceptors[i];</div><div class="line">		interceptor.postHandle(processedRequest, response, mappedHandler.getHandler(), mv);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在<code>postHandle</code> 方法中，我们可以操纵从<code>Controller</code> 中返回的<code>ModelAndView</code> 对象，你可以替换它，清空它，向里面加入属性等。</p>
+<h2 id="渲染ModelAndView"><a href="#渲染ModelAndView" class="headerlink" title="渲染ModelAndView"></a>渲染<code>ModelAndView</code></h2><p>如果<code>ModelAndView</code> 对象不为空，并且没有调用<code>clear</code> 方法清空它，那么接下来它就会被渲染。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">if</span> (mv != <span class="keyword">null</span> &amp;&amp; !mv.wasCleared()) &#123;</div><div class="line">	render(mv, processedRequest, response);</div><div class="line">	<span class="keyword">if</span> (errorView) &#123;</div><div class="line">		WebUtils.clearErrorRequestAttributes(request);</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"><span class="keyword">else</span> &#123;</div><div class="line">	<span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</div><div class="line">		logger.debug(<span class="string">"Null ModelAndView returned to DispatcherServlet with name '"</span> + getServletName() +</div><div class="line">				<span class="string">"': assuming HandlerAdapter completed request handling"</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的<code>render</code> 方法会从给定的<code>ModelAndView</code> 对象中解析出一个<code>View</code> 对象，然后就调用了<code>render</code> 方法，这个方法是要属于<code>AbstractView</code> 类的。如果大家看一下这个类的子类，你会发现各种各样的<code>View</code> 对象，实在是太多了，比如：<code>FreeMarkerView</code> <code>VelocityView</code> <code>InternalResourceView</code>.  <code>AbstractView</code> 类中的<code>render</code> 方法的目的就是用给定的<code>Model</code> 来预处理<code>View</code> 对象，把静态属性和<code>request</code> 域中的属性合并到模型当中，最后把这个合并过后的模型传递到具体子类的<code>renderMergedOutputModel</code> 方法中，进行渲染。</p>
+<h2 id="应用注册拦截器的triggerAfterCompletion方法"><a href="#应用注册拦截器的triggerAfterCompletion方法" class="headerlink" title="应用注册拦截器的triggerAfterCompletion方法"></a>应用注册拦截器的<code>triggerAfterCompletion</code>方法</h2><p>到达这个阶段，整个<code>doDispatch</code> 方法已经全部完毕了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">triggerAfterCompletion(mappedHandler, interceptorIndex, processedRequest, response, null);</div></pre></td></tr></table></figure>
+<h2 id="异常处理"><a href="#异常处理" class="headerlink" title="异常处理"></a>异常处理</h2><p>在上文中提到的<code>initHandlerExceptionResolvers</code> 方法中，我已经提到了关于统一异常的处理。原理就在下面的代码之中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">catch</span> (ModelAndViewDefiningException ex) &#123;</div><div class="line">	logger.debug(<span class="string">"ModelAndViewDefiningException encountered"</span>, ex);</div><div class="line">	mv = ex.getModelAndView();</div><div class="line">&#125;</div><div class="line"><span class="keyword">catch</span> (Exception ex) &#123;</div><div class="line">	Object handler = (mappedHandler != <span class="keyword">null</span> ? mappedHandler.getHandler() : <span class="keyword">null</span>);</div><div class="line">	mv = processHandlerException(processedRequest, response, handler, ex);</div><div class="line">	errorView = (mv != <span class="keyword">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码中有2个异常，一个是<code>ModelAndViewDefiningException</code> ，对于这个异常来说，如果在你的<code>Controller</code> 中抛出了这个异常并给定相应的<code>ModelAndView</code>， 它依然会在下面的代码中解析这个返回的<code>ModelAndView</code> 对象，如果没有指定<code>ModelAndView</code>，那么程序会出错。对于其它的异常来说，都会被<code>Exception</code> 所捕获，接着会用<code>processHandlerException</code> 方法去处理调用我们自己定义的异常处理方法。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，我已经把Spring MVC工作的细节以源码的形式说完了。如果Spring MVC是个黒盒，那么这篇文章已经为大家打开了盒子并看到了里面主要的一些东西。这篇文章也为大家探索Spring MVC开了个好头，它让我们的开发者更进一步地了解了Spring MVC，而不仅仅是单纯地使用它。Spring MVC还有很多细节、优秀地设计思想以及漂亮地编码风格值得我们去探索和学习。下图是我Google一张关于Spring MVC的流程图，画得很详细，供大家参考。</p>
+<img src="/Spring-MVC源码剖析/3rd.png" alt="spring MVC 流程图" title="spring MVC 流程图">
+<p>图片来源：<a href="http://www.programering.com/a/MDMyETNwATM.html" target="_blank" rel="external">http://www.programering.com/a/MDMyETNwATM.html</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java/" rel="tag">#Java</a>
+          
+            <a href="/tags/Spring/" rel="tag">#Spring</a>
+          
+            <a href="/tags/Spring-MVC/" rel="tag">#Spring MVC</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/" rel="next" title="Hotspot虚拟机- 垃圾收集算法和垃圾收集器">
+                <i class="fa fa-chevron-left"></i> Hotspot虚拟机- 垃圾收集算法和垃圾收集器
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/Java应用缓存介绍与LRU-Least-Recently-Used-算法/" rel="prev" title="Java应用缓存介绍与LRU(Least Recently Used)算法">
+                Java应用缓存介绍与LRU(Least Recently Used)算法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="Spring-MVC源码剖析/"
+           data-title="Spring MVC源码剖析" data-url="http://Xurtle.me/Spring-MVC源码剖析/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/me.jpg"
+               alt="Xurtle" />
+          <p class="site-author-name" itemprop="name">Xurtle</p>
+          <p class="site-description motion-element" itemprop="description">做尽人事 才可以看天命</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/hanxlinsist" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/hacker4long" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#spring-MVC-总览"><span class="nav-number">2.</span> <span class="nav-text">spring MVC 总览</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DispatcherServlet的实例化之旅"><span class="nav-number">3.</span> <span class="nav-text">DispatcherServlet的实例化之旅</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#DispatcherServlet中的静态代码块"><span class="nav-number">3.1.</span> <span class="nav-text">DispatcherServlet中的静态代码块</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#strategy对象的初始化"><span class="nav-number">3.2.</span> <span class="nav-text">strategy对象的初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#initHandlerMappings-方法"><span class="nav-number">3.2.1.</span> <span class="nav-text">initHandlerMappings 方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#initHandlerAdapters-方法"><span class="nav-number">3.2.2.</span> <span class="nav-text">initHandlerAdapters 方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#initHandlerExceptionResolvers-方法"><span class="nav-number">3.2.3.</span> <span class="nav-text">initHandlerExceptionResolvers 方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#initViewResolvers-方法"><span class="nav-number">3.2.4.</span> <span class="nav-text">initViewResolvers 方法</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DispatcherServlet如何“统领指挥”？"><span class="nav-number">4.</span> <span class="nav-text">DispatcherServlet如何“统领指挥”？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#找到当前请求的handler"><span class="nav-number">4.1.</span> <span class="nav-text">找到当前请求的handler</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#找到HandlerAdapter"><span class="nav-number">4.2.</span> <span class="nav-text">找到HandlerAdapter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用注册拦截器的preHandle-方法"><span class="nav-number">4.3.</span> <span class="nav-text">应用注册拦截器的preHandle 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#调用处理请求的方法"><span class="nav-number">4.4.</span> <span class="nav-text">调用处理请求的方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用注册拦截器的postHandle-方法"><span class="nav-number">4.5.</span> <span class="nav-text">应用注册拦截器的postHandle 方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#渲染ModelAndView"><span class="nav-number">4.6.</span> <span class="nav-text">渲染ModelAndView</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#应用注册拦截器的triggerAfterCompletion方法"><span class="nav-number">4.7.</span> <span class="nav-text">应用注册拦截器的triggerAfterCompletion方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#异常处理"><span class="nav-number">4.8.</span> <span class="nav-text">异常处理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xurtle</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"hanxlinsist"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,685 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="缓存,LRU," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="引言对于大规模的Java Web应用来说，会有大量的数据和大量的用户，对于如何提升网站的响应速度成为了我们开发人员的一个挑战。对于缓存来说，它可以解决其中的一部分问题。在这篇文章中，我会介绍什么是缓存，它的工作流程是什么样的，被缓存的数据应该具有什么样的特性。最后我会介绍一个非常受欢迎的缓存算法 - LRU，并给出了一个具体的实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java应用缓存介绍与LRU(Least Recently Used)算法">
+<meta property="og:url" content="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/index.html">
+<meta property="og:site_name" content="Xurtle">
+<meta property="og:description" content="引言对于大规模的Java Web应用来说，会有大量的数据和大量的用户，对于如何提升网站的响应速度成为了我们开发人员的一个挑战。对于缓存来说，它可以解决其中的一部分问题。在这篇文章中，我会介绍什么是缓存，它的工作流程是什么样的，被缓存的数据应该具有什么样的特性。最后我会介绍一个非常受欢迎的缓存算法 - LRU，并给出了一个具体的实现。">
+<meta property="og:image" content="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/3rd.jpg">
+<meta property="og:image" content="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/1st.gif">
+<meta property="og:image" content="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/2nd.gif">
+<meta property="og:updated_time" content="2016-11-17T09:11:30.202Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java应用缓存介绍与LRU(Least Recently Used)算法">
+<meta name="twitter:description" content="引言对于大规模的Java Web应用来说，会有大量的数据和大量的用户，对于如何提升网站的响应速度成为了我们开发人员的一个挑战。对于缓存来说，它可以解决其中的一部分问题。在这篇文章中，我会介绍什么是缓存，它的工作流程是什么样的，被缓存的数据应该具有什么样的特性。最后我会介绍一个非常受欢迎的缓存算法 - LRU，并给出了一个具体的实现。">
+<meta name="twitter:image" content="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/3rd.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/"/>
+
+  <title> Java应用缓存介绍与LRU(Least Recently Used)算法 | Xurtle </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Xurtle</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Java应用缓存介绍与LRU(Least Recently Used)算法
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-11-17T11:26:00+08:00" content="2016-11-17">
+              2016-11-17
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/Java应用缓存介绍与LRU-Least-Recently-Used-算法/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="Java应用缓存介绍与LRU-Least-Recently-Used-算法/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>对于大规模的Java Web应用来说，会有大量的数据和大量的用户，对于如何提升网站的响应速度成为了我们开发人员的一个挑战。对于缓存来说，它可以解决其中的一部分问题。在这篇文章中，我会介绍什么是缓存，它的工作流程是什么样的，被缓存的数据应该具有什么样的特性。最后我会介绍一个非常受欢迎的缓存算法 - LRU，并给出了一个具体的实现。</p>
+<img src="/Java应用缓存介绍与LRU-Least-Recently-Used-算法/3rd.jpg" alt="cache" title="cache">
+<a id="more"></a>
+<h1 id="缓存的大致工作流程"><a href="#缓存的大致工作流程" class="headerlink" title="缓存的大致工作流程"></a>缓存的大致工作流程</h1><p>缓存就是把我们频繁访问的数据（并且这些数据比较消耗时间计算或读取）放到内存中，以便我们下次用到这样的数据时，就不用重新计算或者重新读取。比如从数据库中查询出的结果、IO读取一些配置文件的信息等。Java中的缓存接口通常如下所示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Cache</span> </span>&#123;</div><div class="line">    <span class="function">Object <span class="title">get</span><span class="params">(<span class="keyword">final</span> Object key)</span></span>;</div><div class="line">    <span class="function">Object <span class="title">put</span><span class="params">(<span class="keyword">final</span> Object key, <span class="keyword">final</span> Object value)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一个普通应用缓存的大致流程如下图：</p>
+<img src="/Java应用缓存介绍与LRU-Least-Recently-Used-算法/1st.gif" alt="application cache" title="application cache">
+<p>应用程序用一个key从缓存中取数据（get方法），如果在缓存中并没有发现这个key，那么应用程序从一个非常耗时的数据源中取数据并把获取到的数据放到缓存中（put方法）。因此，接下来的请求就可以从缓存中取得数据了。</p>
+<h1 id="缓存数据应该具有的特性"><a href="#缓存数据应该具有的特性" class="headerlink" title="缓存数据应该具有的特性"></a>缓存数据应该具有的特性</h1><p>由于缓存需要用到应用的内存，因此我们需要去控制缓存的大小，把一些不常用的数据从缓存中清除。被缓存的数据应该具有 Temporal locality 和 Spatial locality，下面我把<a href="https://en.wikipedia.org/wiki/Locality_of_reference#Types_of_locality" target="_blank" rel="external">wikipedia</a> 中对这2条性质的定义翻译一下。</p>
+<p><strong>Spatial locality</strong> </p>
+<blockquote>
+<p>如果某一特定时间的某个特定存储位置被引用到，那么在不久的将来它<strong>附近的位置</strong>很可能会被再次引用到。</p>
+</blockquote>
+<p><strong>Temporal locality</strong></p>
+<blockquote>
+<p>如果某一特定时间的某个特定存储位置被引用到，那么在不久的将来它很可能会被再次引用到。Temporal locality 是 Spatial locality 的一个特例，即未来将要被访问到的位置和当前的位置是相同的。</p>
+</blockquote>
+<p>如果我们缓存的数据并不满足上面的两个性质，缓存命中率非常低，因此会导致缓存的元素很快地被清除出去。由于增大维护缓存的开销，并没有达到缓存应有的效果，反而会导致应用程序的性能下降。</p>
+<h1 id="缓存的性能评价指标"><a href="#缓存的性能评价指标" class="headerlink" title="缓存的性能评价指标"></a>缓存的性能评价指标</h1><p>hit/miss ratio 是一个主要的评价缓存性能的指标。我们计算它通过<strong>缓存命中的次数 / 缓存没有命中的次数</strong></p>
+<p>当我们评估缓存的性能时，我们可以让程序运行一段时间后来计算上面的hit/miss ratio，如果这个ratio很高，则证明缓存性能很好; 如果这个ratio的值很小，则表示应用缓存的数据不应该被缓存，或者同样有可能是因为我们的缓存size太小，导致不能捕获到缓存数据的temporal locality.</p>
+<h1 id="LRU算法"><a href="#LRU算法" class="headerlink" title="LRU算法"></a>LRU算法</h1><h2 id="缓存-Eviction-Policy"><a href="#缓存-Eviction-Policy" class="headerlink" title="缓存 Eviction Policy"></a>缓存 Eviction Policy</h2><p>缓存 Eviction Policy 就是当一个新的元素加入到缓存中时，如果导致缓存大小已经超过了所允许的范围，它会从缓存中移除一个已经存在的元素。eviction policy 确保缓存的大小不会超过一个我们自己指定的阙值。</p>
+<p>LRU是一个很受欢迎的具有Eviction Policy功能的一个算法。LRU受欢迎的原因就是它同时捕获了数据访问的2个性质 - temporal locality 和 spatial locality</p>
+<h2 id="LRU算法实现"><a href="#LRU算法实现" class="headerlink" title="LRU算法实现"></a>LRU算法实现</h2><p>一个典型的LRU缓存实现由一个Map和一个linked list组成，Map存储缓存的元素，linked list 保持追踪最近最少使用的缓存元素。当一个缓存元素被更新时，把它从linked list中移除，并把它放入到linked list中的头部。如果当一个新的元素加入到列表中时，LRU会把这个元素加入到linked list的头部，同时LRU也会判断缓存大小是否超过了限制，如果超过了限制，则位于linked list尾部的元素将被移除。</p>
+<p>下面我用<code>LinkedHashMap</code>来实现一个简单的LRU缓存：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.LinkedHashMap;</div><div class="line"><span class="keyword">import</span> java.util.Map;</div><div class="line"></div><div class="line"><span class="keyword">public</span> LRUCache&lt;K, V&gt; extends LinkedHashMap&lt;K, V&gt; &#123;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">int</span> cacheSize;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="title">LRUCache</span><span class="params">(<span class="keyword">int</span> cacheSize)</span> </span>&#123;</div><div class="line">    <span class="keyword">super</span>(<span class="number">16</span>, <span class="number">0.75</span>, <span class="keyword">true</span>);</div><div class="line">    <span class="keyword">this</span>.cacheSize = cacheSize;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="comment">// This method is called just after a new entry has been added</span></div><div class="line">  <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">removeEldestEntry</span><span class="params">(Map.Entry&lt;K, V&gt; eldest)</span> </span>&#123;</div><div class="line">    <span class="keyword">return</span> size() &gt;= cacheSize;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码仅仅是一个简单的实现，并不足以用到真实的应用中。如果大家想要一个可以在真实应用中使用的产品，建议大家看看<a href="https://github.com/ben-manes/caffeine" target="_blank" rel="external">caffeine</a>，基于Java 8的一个高性能缓存库。或者可以参考一下Apache Commons的<a href="https://commons.apache.org/proper/commons-collections/apidocs/org/apache/commons/collections4/map/LRUMap.html" target="_blank" rel="external">LRUMap</a></p>
+<h1 id="二级缓存"><a href="#二级缓存" class="headerlink" title="二级缓存"></a>二级缓存</h1><p>在object-relational mapping (ORM)框架（Hibernate）或者data mapping (DM) 框架（iBatis）都提供了二级缓存的功能。二级缓存封装了缓存逻辑的复杂性，不让客户端看见。通过减小不必要的数据库，二级缓存提高了ORM 或者 DM框架的性能，下图解释了二级缓存的工作流程：</p>
+<img src="/Java应用缓存介绍与LRU-Least-Recently-Used-算法/2nd.gif" alt="Level-2 Cache" title="Level-2 Cache">
+<p>从上图我们可以看到，客户端应用并没有直接去访问缓存，而是访问ORM 或者 DM框架提供的更高级的接口。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>恰当的使用缓存可以大大提高我们应用程序的性能。但是，在选择是否使用缓存之前，我们必须要看看被缓存的数据是否符合temporal locality 或者 spatial locality，如果数据并不符合这样的性质，缓存不仅不会使我们的应用程序性能提升，而且还会导致性能下降，这是因为维护缓存的开销要比从缓存中获益的开销要小。因此，在使用缓存之前，我们一定要认真想一想，数据是否具有上面的2个特性。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/缓存/" rel="tag">#缓存</a>
+          
+            <a href="/tags/LRU/" rel="tag">#LRU</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/Spring-MVC源码剖析/" rel="next" title="Spring MVC源码剖析">
+                <i class="fa fa-chevron-left"></i> Spring MVC源码剖析
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="Java应用缓存介绍与LRU-Least-Recently-Used-算法/"
+           data-title="Java应用缓存介绍与LRU(Least Recently Used)算法" data-url="http://Xurtle.me/Java应用缓存介绍与LRU-Least-Recently-Used-算法/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/me.jpg"
+               alt="Xurtle" />
+          <p class="site-author-name" itemprop="name">Xurtle</p>
+          <p class="site-description motion-element" itemprop="description">做尽人事 才可以看天命</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/hanxlinsist" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/hacker4long" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#缓存的大致工作流程"><span class="nav-number">2.</span> <span class="nav-text">缓存的大致工作流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#缓存数据应该具有的特性"><span class="nav-number">3.</span> <span class="nav-text">缓存数据应该具有的特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#缓存的性能评价指标"><span class="nav-number">4.</span> <span class="nav-text">缓存的性能评价指标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LRU算法"><span class="nav-number">5.</span> <span class="nav-text">LRU算法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#缓存-Eviction-Policy"><span class="nav-number">5.1.</span> <span class="nav-text">缓存 Eviction Policy</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LRU算法实现"><span class="nav-number">5.2.</span> <span class="nav-text">LRU算法实现</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#二级缓存"><span class="nav-number">6.</span> <span class="nav-text">二级缓存</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xurtle</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"hanxlinsist"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

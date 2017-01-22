@@ -1,0 +1,815 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Java虚拟机,垃圾收集算法,垃圾收集器," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="引言当提到Java虚拟机的时候，我们首先应该区分2件事情。一个是抽象的Java虚拟机规范，另一个是根据这个规范具体的实现。市面上有很多根据这个规范实现的虚拟机，比如jRockit、IBM J9、Hotspot等。那么在这篇文章中，我只介绍关于Hotspot虚拟机的行为，以及它里面提供的垃圾收集器。
+什么是垃圾收集？相信每一个现实中生活的人都知道什么是垃圾收集。顾名思义，就是找到没有用的东西（垃圾）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hotspot虚拟机- 垃圾收集算法和垃圾收集器">
+<meta property="og:url" content="http://Xurtle.me/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/index.html">
+<meta property="og:site_name" content="Xurtle">
+<meta property="og:description" content="引言当提到Java虚拟机的时候，我们首先应该区分2件事情。一个是抽象的Java虚拟机规范，另一个是根据这个规范具体的实现。市面上有很多根据这个规范实现的虚拟机，比如jRockit、IBM J9、Hotspot等。那么在这篇文章中，我只介绍关于Hotspot虚拟机的行为，以及它里面提供的垃圾收集器。
+什么是垃圾收集？相信每一个现实中生活的人都知道什么是垃圾收集。顾名思义，就是找到没有用的东西（垃圾）">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/1st.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/2nd.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/3rd.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/4th.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/5th.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/6th.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/7th.png">
+<meta property="og:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/8th.png">
+<meta property="og:updated_time" content="2016-10-22T01:15:44.136Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hotspot虚拟机- 垃圾收集算法和垃圾收集器">
+<meta name="twitter:description" content="引言当提到Java虚拟机的时候，我们首先应该区分2件事情。一个是抽象的Java虚拟机规范，另一个是根据这个规范具体的实现。市面上有很多根据这个规范实现的虚拟机，比如jRockit、IBM J9、Hotspot等。那么在这篇文章中，我只介绍关于Hotspot虚拟机的行为，以及它里面提供的垃圾收集器。
+什么是垃圾收集？相信每一个现实中生活的人都知道什么是垃圾收集。顾名思义，就是找到没有用的东西（垃圾）">
+<meta name="twitter:image" content="http://Xurtle.me/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/1st.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://Xurtle.me/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/"/>
+
+  <title> Hotspot虚拟机- 垃圾收集算法和垃圾收集器 | Xurtle </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Xurtle</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hotspot虚拟机- 垃圾收集算法和垃圾收集器
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-02T20:44:00+08:00" content="2016-10-02">
+              2016-10-02
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="Hotspot虚拟机- 垃圾收集算法和垃圾收集器/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>当提到Java虚拟机的时候，我们首先应该区分2件事情。一个是抽象的<a href="https://docs.oracle.com/javase/specs/jvms/se7/html/" target="_blank" rel="external">Java虚拟机规范</a>，另一个是根据这个规范具体的实现。市面上有很多根据这个规范实现的虚拟机，比如jRockit、IBM J9、Hotspot等。那么在这篇文章中，我只介绍关于Hotspot虚拟机的行为，以及它里面提供的垃圾收集器。</p>
+<h1 id="什么是垃圾收集？"><a href="#什么是垃圾收集？" class="headerlink" title="什么是垃圾收集？"></a>什么是垃圾收集？</h1><p>相信每一个现实中生活的人都知道什么是垃圾收集。顾名思义，就是找到没有用的东西（垃圾）并把它扔掉。但是，在JVM中的垃圾收集是完全相反的，它首先找到所有仍然使用的对象并标记下来，然后清理掉没有标记的垃圾。</p>
+<p>那么对于一个垃圾收集器来说，它主要有三个工作需要完成：</p>
+<ol>
+<li>分配内存</li>
+<li>确保任何被引用的对象在内存中，不被垃圾收集器收集</li>
+<li>释放不再使用的对象的内存</li>
+</ol>
+<p>被引用的对象我们称它是活着的（live），不再被引用的对象我们称它为死的（dead），或垃圾。找到并释放这些垃圾的过程叫做<strong>垃圾收集</strong>。</p>
+<a id="more"></a>
+<h1 id="Mark-and-Sweep"><a href="#Mark-and-Sweep" class="headerlink" title="Mark and Sweep"></a>Mark and Sweep</h1><ul>
+<li><strong>Marking : </strong> 遍历所有从GC roots开始可到达的对象并把这些对象标记为存活的对象</li>
+<li><strong>Sweeping : </strong> 确保不可达对象占用的内存能在下一次内存分配中可以被重新利用。</li>
+</ul>
+<p>在Java中，GC Roots对象可以为：</p>
+<ul>
+<li>Local variable and input parameters of the currently executing methods</li>
+<li>Active threads</li>
+<li>Static fields</li>
+<li>JNI references</li>
+</ul>
+<p>JVM中不同的垃圾收集算法实现细节有些不同，但是大体上来说，所有的垃圾收集算法都遵循着Marking和Sweeping，等我下面介绍这些垃圾收集算法和垃圾收集器的时候大家就能感觉到了。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/1st.png" alt="Mark and Sweep" title="Mark and Sweep">
+<p>相比于Reference Counting来说，可达性分析也可以收集循环引用的垃圾，如上图所示。由于Hotspot虚拟机并没有用Reference Counting来判断一个对象是否存活，这里我就不介绍这种方法了，大家可以参考一下维基百科上的解释<a href="https://en.wikipedia.org/wiki/Reference_counting" target="_blank" rel="external">Reference Counting</a>，概念也很简单。</p>
+<h1 id="理想的垃圾收集器特性"><a href="#理想的垃圾收集器特性" class="headerlink" title="理想的垃圾收集器特性"></a>理想的垃圾收集器特性</h1><p>在我介绍Hotspot虚拟机中具体的垃圾收集器之前，我们应该首先了解一个理想的垃圾收集器应该具有什么样的特点才能满足非常复杂的垃圾收集过程。</p>
+<p>一、<strong>垃圾收集器应该是安全的。</strong>也就是说，live对象占用的内存不能被释放，垃圾对象占用的内存要尽快释放。这个特点是最重要的一点，如果不能满足这点，其它特点再牛逼，也可以say goodbye了。</p>
+<p>二、<strong>垃圾收集器应该有效地收集垃圾。</strong>也就是说：不能让我们自己的应用在垃圾收集的过程中停顿太长的时间（<strong>stop the world</strong>）。然而，这就象很多计算机系统一样，通常在时间、空间和频率上有一个trade-offs. 比如，如果垃圾收集器收集的堆容量很小，那么收集过程会很快，但是，堆很快就会被填满，就会需要更加频繁的垃圾收集。反之，在堆容量很大的情况下，需要更长的时间才能填满堆，因此垃圾收集的次数很少，但是每次收集就需要更多的时间。</p>
+<p>三、垃圾收集器应该有效解决<strong>fragmentation</strong>的问题。fragmentation的意思就是说，垃圾收集器在收集完垃圾以后会产生很多不连续的内存空间，如果下次分配一个大对象有可能出现没有任何一个连续的空间能容纳这个对象，这会导致内存空间的浪费，同时也会触发下一次垃圾收集过程。有一个方法可以消除fragmentation，它叫做<strong>compaction</strong>，下面我会介绍的。</p>
+<p>四、<strong>可扩展性也是很重要的一个特点。</strong> 由于现在很多应用中都是多核处理器或者多个处理器，那么我们的垃圾收集器可以利用这些优势去并行分配内存和收集垃圾。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/2nd.png" alt="compaction" title="compaction">
+<h1 id="分代收集（Generational-Collection）相关概念"><a href="#分代收集（Generational-Collection）相关概念" class="headerlink" title="分代收集（Generational Collection）相关概念"></a>分代收集（Generational Collection）相关概念</h1><p>在Java8的HotSpot虚拟机中一共包括了5个垃圾收集器，它们每一个都是基于分代收集的思想。在这一节中，我主要介绍一下各个分代区域以及对象是怎样被分配到这些区域的。这是官方文档给出的5个可得到的收集器：<a href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/collectors.html" target="_blank" rel="external">5 Available Collectors</a>，并介绍了如何针对自己的应用选择出一个合适的收集器。</p>
+<h2 id="Generational-Hypothesis"><a href="#Generational-Hypothesis" class="headerlink" title="Generational Hypothesis"></a>Generational Hypothesis</h2><p>对于Generational Hypothesis的概念，<a href="https://www.quora.com/What-is-the-generational-hypothesis-in-the-context-of-garbage-collection/answer/Jeff-Hammerbacher?srid=IayD" target="_blank" rel="external">Jeff Hammerbacher</a>在Quora上已经给出一个很好地答案，我把它翻译一下。</p>
+<blockquote>
+<p>Generational Hypothesis是一个关于对象生命周期分布的假设。准确地说，这个假设认为对象生命周期的分布是双峰的：大部分的对象要么是短命的，要么就是一直存活的。</p>
+</blockquote>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/3rd.png" alt="Generational Hypothesis" title="Generational Hypothesis">
+<p>基于这个假设，Hotspot虚拟机把内存分为年轻代（Young Generation）和老年代（Old Generation）。有了这样的内存区域划分，我们可以针对不同的区域选择合适的算法来进行垃圾收集，从而大大提高垃圾收集的效率。<strong>注意：分代收集是基于上面的假设来进行的，如果你的应用完全不符合上面的假设，那么你的垃圾收集效率一定很低。</strong></p>
+<p>因为年轻代空间通常很小，包含很多短命的对象，所以它的收集要频繁一些。经过了几轮年轻代收集，依然存活的对象被晋升（promoted）或者tenured到老年代。因为老年代的空间要比年轻代大很多并且它的对象大部分都是长命的，所以它的收集是不频繁的。由于年轻代的收集很频繁，因此针对这个区域的收集算法要很快。另一方面，由于老年代的收集不是很频繁的并且它占用了大多数的堆空间，因此这一区域的算法针对低频的垃圾收集要空间有效的。</p>
+<p>在介绍各个分代区域之前，大家先看看下面这张图。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/4th.png" alt="Generational Collection" title="Generational Collection">
+<p><strong>注意：在Java 8中已经移除了永久代。</strong></p>
+<h2 id="年轻代"><a href="#年轻代" class="headerlink" title="年轻代"></a>年轻代</h2><p>年轻代是由一个Eden区域 + 2个survivor区域组成。大部分的对象最初都被分到Eden区域（特别大的对象可能直接被分配到老年代）。对于2个survivor区域来说，它们中的一个必须始终是空的。并且每个survivor区域中的对象至少是经历过一次年轻代垃圾收集的。假设几分钟前垃圾收集器已经进行了一次年轻代的垃圾收集了，Eden区域和其中的1个survivor区域都有对象，另一个survivor区域为空。现在，又要进行一次垃圾收集了，收集器做的就是：把Eden区域和那个有对象的survivor区域中活着的对象找出来并复制到另一个空的survivor区域中，然后清空Eden区域和先前有对象的那个survivor区域。</p>
+<p>如果空的这个survivor区域的空间不够装下Eden区域和另一个survivor区域中活着的对象，那么收集器会把容纳不下的对象直接分配到老年代。如果老年代也容不下这些对象，那么会触发老年代的垃圾收集，然后去容纳这些对象。</p>
+<p>由于Java应用支持多线程，那么在多线程应用的情况下对象的分配就会出现一些问题。比如，我上一个线程分配的对象会被下一个线程所分配的对象覆盖。如果用一个全局锁来把整个年轻代锁住，那么分配一个对象到年轻代的性能会非常低下。因此，虚拟机团队想出了一个解决方案叫做<strong>Thread-Local Allocation Buffers (TLABs).</strong> </p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/5th.png" alt="Thread-Local Allocation Buffers" title="Thread-Local Allocation Buffers">
+<p>如上图所示，每一个线程都有一个自己的TLAB，分配对象时用指针碰撞（bump-the-pointer）技术去在各自的TLAB中分配对象，大大提升了年轻代分配对象的效率。设置‐XX:+UseTLAB来启用TLAB，通过‐XX:TLABSize来设置其大小，默认大小为0，0表示虚拟机动态计算其大小。</p>
+<p>经过了几次垃圾收集还没有被回收的对象就被promoted到老年代了。那么如何去判断一个对象是否足够老可以晋升到老年代呢？垃圾收集器追踪每个活着对象被收集的次数，每挺过一次垃圾收集，对象的年龄就加1，当一个对象的年龄超过了指定的阙值（tenuring threshold），它就会被晋升到老年代。通过设置XX:+MaxTenuringThreshold来指定一个上限，如果设置为0，那么经过1次垃圾收集以后马上被晋升。</p>
+<h2 id="老年代"><a href="#老年代" class="headerlink" title="老年代"></a>老年代</h2><p>老年代的空间是非常大的并且它里面存在的对象成为垃圾的可能性很小。老年代的垃圾收集次数要比年轻代少很多，并且由于老年代的对象很少会成为垃圾对象，年轻代的做法（在survivor区域不断copy）并不适合老年代。老年代具体的收集算法我会在下面具体的垃圾收集器中介绍。</p>
+<h2 id="永久代"><a href="#永久代" class="headerlink" title="永久代"></a>永久代</h2><p><strong>永久代在Java 8以前存在。</strong> JVM用这里存储一些类的元数据还有一些被内在化的字符串。<a href="http://stackoverflow.com/questions/10578984/what-is-string-interning/10579062#10579062" target="_blank" rel="external">What is String interning?</a>详细地解释了什么是内在化字符串。Hotspot虚拟机用永久代实现了方法区，因此如果你用动态代理技术或CGLib产生大量的增强代理类，都会使永久代出现异常。比如，当你用Spring的AOP时，它都会为想要增强的类产生一个代理类从而达到增强的目的，如果产生的类很多，你的永久代将会溢出。</p>
+<p>永久代给Java开发者制造了很多的麻烦，因为很难预测出它将需要多少内存空间。如果出现溢出：产生java.lang.OutOfMemoryError: Permgen space.的错误。</p>
+<h2 id="Metaspace"><a href="#Metaspace" class="headerlink" title="Metaspace"></a>Metaspace</h2><p>由于上面永久代的缺点，它在Java 8中被移除，取而代之的是Metaspace，这块内存区域位于本地内存中。默认情况下，Metaspace的大小只被Java进程可得到的本地内存所限制。因此，这个区域并不会因为稍微增加一个类就导致溢出。<strong>注意：Metaspace没有限制地增长将会导致本地内存溢出。</strong> 你可以设置-XX:MaxMetaspaceSize来限制其大小。</p>
+<h1 id="垃圾收集算法的种类"><a href="#垃圾收集算法的种类" class="headerlink" title="垃圾收集算法的种类"></a>垃圾收集算法的种类</h1><p>从上面的分类收集中我们可以看出，不同的分代区域具有不同的特点，因此我们可以利用这些特点来选出具有针对性地垃圾收集算法，使得收集更加有效。本节我会介绍Hotspot虚拟机中的垃圾收集器会用到的算法，介绍它们具体的实现过程。</p>
+<h2 id="Serial-vs-Parallel"><a href="#Serial-vs-Parallel" class="headerlink" title="Serial vs Parallel"></a>Serial vs Parallel</h2><p>即使你的电脑有多个CPU，Serial只用一个CPU来进行垃圾收集。对于Parallel来说，它会把一个垃圾收集任务拆分成几部分，在多个CPU上并行执行这些任务。Parallel收集将会使垃圾收集更快地完成，但是，它同时也增加了额外的复杂性和潜在的fragmentation. </p>
+<h2 id="Concurrent-versus-Stop-the-world"><a href="#Concurrent-versus-Stop-the-world" class="headerlink" title="Concurrent versus Stop-the-world"></a>Concurrent versus Stop-the-world</h2><p>对于Stop-the-world来说，在垃圾收集期间，我们自己的应用完全被停止。对于Concurrent来说，它可以并发的执行垃圾收集和我们的应用。Stop-the-world垃圾收集要比Concurrent垃圾收集简单的多，因为我们自己的应用不需要继续运行，那么在垃圾收集期间就不会向堆中加入对象，这大大简化了垃圾收集的过程。“成也萧何，败也萧何”，它的优点也是它的缺点，因为Stop-the-world需要停止我们自己的应用程序，而一些应用需要快速做出响应，而Stop-the-world会导致应用停止，这并不是我们所期望的。相应的，由于Concurrent是并发地处理垃圾收集任务和应用，所以Concurrent的停顿时间要短，但是由于在垃圾收集的同时，应用还向堆中加入对象，<em>这就好比自己在打扫屋子的同时，别人还向里面扔垃圾，真的是很烦人啊！</em> 这会增加额外的开销并且会需要更大的堆内存。</p>
+<h2 id="Compacting-versus-Non-compacting-versus-Copying"><a href="#Compacting-versus-Non-compacting-versus-Copying" class="headerlink" title="Compacting versus Non-compacting versus Copying"></a>Compacting versus Non-compacting versus Copying</h2><p>当垃圾收集过后，有可能会出现不连续的内存空间。Compacting的做法就是把所有活着的对象放到一起，之后就可以用简单并且快速的指针碰撞来分配对象了。由于它需要移到活着的对象，这会导致垃圾收集过程需要更多的时间。</p>
+<p>non-compacting的做法正好与Compacting相反，它在垃圾收集完毕以后并不会把活着的对象放到一起。这样做的好处就是它更快地完成垃圾收集，但是缺点就会导致潜在的fragmentation，那么下次向堆中分配对象时，会需要更长的时间，因为它需要搜索堆内存从而找到一块连续的内存足以容纳新分配的对象。</p>
+<p>Copying的做法是把活着的对象复制到一个新的内存区域，这样做的好处就是由于这块新的区域是空的，我可以从头到尾快速的分配对象并不会产生fragmentation现象。但是缺点也很明显，就是它需要额外的复制时间和额外的内存空间。</p>
+<h1 id="性能指标"><a href="#性能指标" class="headerlink" title="性能指标"></a>性能指标</h1><p>评价一道美食需要看它的色、香、味，有了这套指标，我们就可以综合评价这道食物是好是坏。同样地，对于垃圾收集器来说，也有一套指标来评价其性能，从而判断一个垃圾收集器是好是坏，本节将会介绍这套指标及其对应的意义。</p>
+<ul>
+<li>Throughput - 在一段很长的时间内，这段时间没有花在垃圾收集上的时间的百分比</li>
+<li>Garbage collection overhead - 与Throughput相反，花费在垃圾收集上的时间的百分比</li>
+<li>Pause time - 当垃圾收集时，我们自己的应用被停止的时间</li>
+<li>Frequency of collection - 垃圾收集多久出现一次</li>
+<li>Footprint - 大小的度量，例如堆大小</li>
+<li>Promptness - 一个对象变成垃圾到它的这块内存被释放所需要的时间</li>
+</ul>
+<h1 id="垃圾收集类型"><a href="#垃圾收集类型" class="headerlink" title="垃圾收集类型"></a>垃圾收集类型</h1><p>由于Hotspot虚拟机的垃圾收集是基于分代思想的，那么在不同的分代区域收集会产生不同的垃圾收集类型，本节我将会介绍这些垃圾收集类型以及它们发生的时机。</p>
+<h2 id="minor-gc"><a href="#minor-gc" class="headerlink" title="minor gc"></a>minor gc</h2><p>发生在年轻代的垃圾收集叫做<strong>minor gc</strong>，它具体的细节是什么样呢？ </p>
+<ul>
+<li>当JVM不能为一个新对象分配空间时，minor gc被触发。例如：Eden区域被填满时。因此，你的应用分配对象的频率越高，minor gc发生的越频繁。</li>
+<li>在minor gc期间，老年代实际上被忽略。因此，从老年代到年轻代的引用被当作GC roots，而从年轻代到老年代的引用在标记阶段被忽略。</li>
+<li>minor gc会触发stop-the-world的发生，致使应用线程停止。如果在Eden区域中的大部分对象都被标记为垃圾，既符合上面的假设，那么停顿时间是可以忽略不计的。但是，如果与假设相反，在Eden区域依然大部分的对象都是活着的，那么minor gc会花费很多的时间。</li>
+</ul>
+<h2 id="full-gc"><a href="#full-gc" class="headerlink" title="full gc"></a>full gc</h2><p>清理整个堆的过程叫做<strong>full gc</strong>，有时也叫做major collection.  当老年代太满了而不能要接受所有来自年轻代晋升的对象时，所有的收集器（除了CMS）将停止年轻代的收集算法运行，而是用老年代的收集算法清理整个堆内存。（CMS垃圾收集器的老年代收集算法不能收集年轻代）。</p>
+<h1 id="Hotspot虚拟机中的垃圾收集器"><a href="#Hotspot虚拟机中的垃圾收集器" class="headerlink" title="Hotspot虚拟机中的垃圾收集器"></a>Hotspot虚拟机中的垃圾收集器</h1><p>上面我已经介绍了不同的垃圾收集算法以及执行的过程。本节我将介绍Hotspot虚拟机中的垃圾收集器和各个收集器中所使用的收集算法，以及主导垃圾收集的过程。</p>
+<h2 id="serial-collector"><a href="#serial-collector" class="headerlink" title="serial collector"></a>serial collector</h2><p>对于serial collector来说，年轻代和老年代的收集都是<a href="#Serial-vs-Parallel">serial</a>的，并且会导致<a href="#Concurrent-versus-Stop-the-world">Stop-the-world</a>的出现。</p>
+<h3 id="serial-collector之年轻代收集"><a href="#serial-collector之年轻代收集" class="headerlink" title="serial collector之年轻代收集"></a>serial collector之年轻代收集</h3><p>这个收集器在年轻代的收集用mark-copy，也就是我上面说的在2个survivor区域之间来回复制。mark阶段就是标记出所有活着的对象，copy阶段就是把这些活着的对象copy到空的那个survivor区域。<strong>注意：如果空的这个survivor区域已经被来自Eden区域和另一个survivor区域中的对象填满了，那么剩下活着的对象将被晋升到老年代，不管这些对象已经在几次minor gc中生存下来。</strong></p>
+<h3 id="serial-collector之老年代收集"><a href="#serial-collector之老年代收集" class="headerlink" title="serial collector之老年代收集"></a>serial collector之老年代收集</h3><p>这个收集器在老年代的收集用mark-sweep-compact. 在mark阶段，收集器标记出还存活的对象; 在sweep阶段，清理掉所有的没被标记的垃圾; 在compact阶段，收集器移动所有活着的对象到老年代的起始端，因此以后在向老年代分配对象时就可以用快速且有效的指针碰撞技术了。下图是compact阶段前后的样子。红X的对象已死。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/6th.png" alt="Compaction of the old generation" title="Compaction of the old generation">
+<h3 id="什么时候使用serial-collector"><a href="#什么时候使用serial-collector" class="headerlink" title="什么时候使用serial collector"></a>什么时候使用serial collector</h3><blockquote>
+<p>用-XX:+UseSerialGC参数来启用serial collector</p>
+</blockquote>
+<p>serial collector用单个线程去执行所有的垃圾收集，由于没有了线程之间的交流开销，这使得它稍微高效一些。它最适合在单个处理器的机器上工作，因为它不能利用多处理器硬件的优势。对于堆空间很小的应用（大约100M），即使在多处理器的硬件上，它也是可行的。</p>
+<h2 id="Parallel-Collector"><a href="#Parallel-Collector" class="headerlink" title="Parallel Collector"></a>Parallel Collector</h2><p>Parallel Collector也被叫做throughput collector，对于Parallel Collector来说，年轻代和老年代的收集都是<a href="#Serial-vs-Parallel">Parallel</a>的，用多个线程去执行收集任务，这会大大减少垃圾收集时间。和serial collector一样，年轻代和老年代的收集都会导致<a href="#Concurrent-versus-Stop-the-world">Stop-the-world</a>的出现。</p>
+<h3 id="Parallel-Collector之年轻代收集"><a href="#Parallel-Collector之年轻代收集" class="headerlink" title="Parallel Collector之年轻代收集"></a>Parallel Collector之年轻代收集</h3><p>和serial collector一样，它在收集年轻代时，用的也是mark-copy，只不过是用多个CPU并行而已。相比于serial collector，它确实利用了现代机器多处理器的优势，大大减少了垃圾收集时的Stop-the-world的时间。由于Parallel Collector在以下2点有效地利用了系统资源从而提高了<a href="#性能指标">Throughput</a>.</p>
+<ol>
+<li>在垃圾收集期间，所有的CPU都在执行垃圾收集任务，减小了Stop-the-world的时间</li>
+<li>在各个垃圾收集循环之间（即应用运行的时候），它并没有像CMS一样去占用系统的资源</li>
+</ol>
+<p>下图解释了serial collector和Parallel Collector在年轻代收集之间的不同。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/7th.png" alt="Comparison between serial and parallel young generation collection" title="Comparison between serial and parallel young generation collection">
+<h3 id="Parallel-Collector之老年代收集"><a href="#Parallel-Collector之老年代收集" class="headerlink" title="Parallel Collector之老年代收集"></a>Parallel Collector之老年代收集</h3><p>它和serial collector一样，用mark-sweep-compact算法来进行老年代的收集。<strong>注意：Parallel Collector在老年代的收集并不是并行的。</strong></p>
+<p>虽然老年的收集是不频繁的，但是一旦它被触发，就有可能出现很长的Stop-the-world时间，这在一些要求低延迟的应用是不可接受的。如果在你的应用场合需要更低的延迟，那么相比于Parallel Collector，CMS可能是个很好的选择。</p>
+<h3 id="什么时候使用Parallel-Collector"><a href="#什么时候使用Parallel-Collector" class="headerlink" title="什么时候使用Parallel Collector"></a>什么时候使用Parallel Collector</h3><blockquote>
+<p>用-XX:+UseParallelGC参数来启用Parallel Collector</p>
+</blockquote>
+<p>如果你有一个多处理器的机器，并且你的应用并不需要停顿时间限制，那么Parallel Collector是个不错的选择。</p>
+<h2 id="Parallel-Compacting-Collector"><a href="#Parallel-Compacting-Collector" class="headerlink" title="Parallel Compacting Collector"></a>Parallel Compacting Collector</h2><p>Parallel Compacting Collector几乎和Parallel Collector一样，除了Parallel Compacting Collector用一个新的算法针对老年代的收集。Sun公司官方说：Parallel Compacting Collector将最终取代Parallel Collector.</p>
+<h3 id="Parallel-Compacting-Collector之年轻代收集"><a href="#Parallel-Compacting-Collector之年轻代收集" class="headerlink" title="Parallel Compacting Collector之年轻代收集"></a>Parallel Compacting Collector之年轻代收集</h3><p>和<a href="#Parallel-Collector之年轻代收集">parallel collector</a>一样。</p>
+<h3 id="Parallel-Compacting-Collector之老年代收集"><a href="#Parallel-Compacting-Collector之老年代收集" class="headerlink" title="Parallel Compacting Collector之老年代收集"></a>Parallel Compacting Collector之老年代收集</h3><p>与Parallel Collector不同的是，Parallel Compacting Collector可以并行地对老年代进行收集。</p>
+<h3 id="什么时候使用Parallel-Compacting-Collector"><a href="#什么时候使用Parallel-Compacting-Collector" class="headerlink" title="什么时候使用Parallel Compacting Collector"></a>什么时候使用Parallel Compacting Collector</h3><blockquote>
+<p>用-XX:+UseParallelOldGC参数来启用Parallel Compacting Collector</p>
+</blockquote>
+<p>它和Parallel Collector的使用场景一样。但是，对于有停顿时间限制的应用，Parallel Compacting Collector会更加合适。</p>
+<h2 id="Concurrent-Mark-Sweep-CMS-Collector"><a href="#Concurrent-Mark-Sweep-CMS-Collector" class="headerlink" title="Concurrent Mark-Sweep (CMS) Collector"></a>Concurrent Mark-Sweep (CMS) Collector</h2><p>CMS Collector也叫做low-latency collector，它是专门为老年代设计的。因为年轻代的stop-the-world时间不会太长，而对于老年代来说，虽然它的收集并不频繁，但是每次收集都可能会出现较长的停顿时间，尤其是在堆空间很大的时候。而CMS Collector的出世就是解决老年代停顿时间长的问题。解决这个问题它主要通过下面2个手段：</p>
+<ol>
+<li>当老年代收集过后，CMS Collector并不会去<a href="#Compacting-versus-Non-compacting-versus-Copying">compacting</a>老年代，而是用空闲列表（<a href="https://en.wikipedia.org/wiki/Free_list" target="_blank" rel="external">free-lists</a>）去管理被释放的空间。</li>
+<li>它在mark-and-sweep阶段大部分的时候都是与我们自己的应用并发执行。</li>
+</ol>
+<p>如果你应用的主要目标就是降低延迟，那么CMS Collector是个非常不错的选择。<strong>注意：CMS Collector是靠着与我们的应用程序并行才减少了老年代的停顿时间，由于我们的应用一直在运行，所以老年代中的对象也在动态地变化着，因此CMS Collector需要更加小心地进行垃圾收集，这无疑会增加开销。用stop-the-world的方法收集老年代时，虽然它的停顿时间会长一些，但是它一下就清理干净了，然后继续我们的应用程序。而CMS Collector给我的感觉有点像“细水长流”，它虽然减少了停顿时间，但是它基本上会一直和我们的应用程序一起消耗着CPU资源，相比于Parallel Collector，CMS Collector会有更低的throughput</strong></p>
+<h3 id="CMS-Collector之年轻代收集"><a href="#CMS-Collector之年轻代收集" class="headerlink" title="CMS Collector之年轻代收集"></a>CMS Collector之年轻代收集</h3><p>和<a href="#Parallel-Collector之年轻代收集">parallel collector</a>一样。</p>
+<h3 id="CMS-Collector之老年代收集"><a href="#CMS-Collector之老年代收集" class="headerlink" title="CMS Collector之老年代收集"></a>CMS Collector之老年代收集</h3><p>CMS Collector在收集老年代的时候总共需要4个阶段，其中有2个阶段依然会出现stop-the-world的现象。下图是CMS Collector与serial collector之间在老年代收集之间的比较，大家先仔细观察一下，看看有什么不同。之后我会详细介绍这4个阶段的细节并介绍在每个阶段会出现的问题。</p>
+<img src="/Hotspot虚拟机-%20垃圾收集算法和垃圾收集器/8th.png" alt="Comparison between serial and CMS old generation collection" title="Comparison between serial and CMS old generation collection">
+<ol>
+<li>initial mark - 会出现stop-the-world<ul>
+<li>标记出应用代码直接可达的活着的对象，这个过程需要很短的时间，因此stop-the-world的时间基本可以忽略。initial mark和remark都会出现stop-the-world的现象，但是从上图我们可以看出，remark用的是多线程并行标记，而initial mark却用单线程去标记，这是为什么呢？其实很简单，如果你用并发去做，就有些“杀鸡用宰牛刀”的意味。说直白一点，即使是你用单线程去做这个任务，它依然只有很短时间，可以忽略不计; 相反，如果你用多线程去做，你需要为各个任务去分配线程，线程之间还需要通信开销，你提前做了这么多的工作最后却干了一件“鸡毛蒜皮的小事”，这甚至有可能会导致你的标记时间相比于单线程来说要增加，所以这里用单线程去做。</li>
+</ul>
+</li>
+<li>concurrent mark - 与我们的应用程序并发执行<ul>
+<li>由于在initial mark阶段已经找到了GC Roots，那么在这个阶段会从GC Roots出发，沿着引用链去找剩下存活的对象。1、由于我们的程序在这个阶段下也一直在运行，因此有可能会继续向老年代中添加对象; 2、虽然在remark阶段之后，CMS Collector会保证所有活着的对象被标记，但是在这个过程中一些被认为活着的对象可能已经死了，因此只能等到下一次老年代的收集才能被回收。由于这2点原因，CMS Collector无疑会比其它的收集器需要更大的堆空间。</li>
+</ul>
+</li>
+<li>remark - 会出现stop-the-world<ul>
+<li>由于在concurrent mark阶段期间，我们自己的应用程序一直在运行，它会更新一些对象的引用，因此在concurrent mark结束后并不能保证所有活着的对象被标记，那么这个阶段就是来解决这个问题的。在这个阶段中，它会重新访问所有在concurrent mark期间被改动的对象，保证让所有活着的对象被标记到。由于这个阶段的任务是头“牛”，因此就如上图所示，这个阶段是用多线程（宰牛刀）去执行的。</li>
+</ul>
+</li>
+<li>concurrent sweep - 与我们的应用程序并发执行<ul>
+<li>这个阶段的任务就是释放掉垃圾占用的空间。CMS Collector为了减小停顿时间，它在这个阶段并没有进行compacting，而是用空闲列表去维护被释放的空间。相比于指针碰撞，它在分配对象的时候需要更多的时间。在大多数情况下（有一些大对象直接被分配到老年代），对象分配到老年代是因为年轻代的对象晋升了。由于你用空闲列表的方式去分配内存会需要更多的时间，因此也会增加年轻代收集的开销。</li>
+</ul>
+</li>
+</ol>
+<h3 id="什么时候使用CMS-Collector"><a href="#什么时候使用CMS-Collector" class="headerlink" title="什么时候使用CMS Collector"></a>什么时候使用CMS Collector</h3><blockquote>
+<p>用-XX:+UseConcMarkSweepGC参数来启用CMS Collector</p>
+</blockquote>
+<p>相比于parallel collector，CMS Collector减少了老年代的停止时间，但是同时，它也作出了一些牺牲，比如：增加了年轻代的停止时间、减少了throughput和需要更大的堆空间。</p>
+<p>如果你的应用需要更短的垃圾收集停顿时间，那么CMS是个不错的选择。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，我已经介绍完了Hotspot虚拟机中的垃圾收集算法和垃圾收集器。这里面没有哪个收集器可以吃遍天下的，选择哪个收集器要取决于你的应用，你手中现有的硬件资源。调节垃圾收集器的参数就像我们实际开发中选择哪个算法也样，我们结合自己的应用，在时间和空间上要找到一个适合我们自己的tradeoff. </p>
+<p>大家在调节GC的时候，千万不要凭借自己的感觉随便选择一个GC相关的参数。而是应该遵循下面这几个简单的步骤，从而使你在优化GC的道路上进入一个正确的方向。</p>
+<ol>
+<li>明确你的性能目标。Oracle官方的建议就是在开始的时候<strong>do nothing</strong>，让GC自己去动态地调节，如果不能满足你的性能目标的时候再去调节GC. 性能指标分为3类，Latency、Throughput、capacity</li>
+<li>用你当前的GC参数去做测试，记录下你的性能结果</li>
+<li>把你的测试结果与你自己定义的目标做比较</li>
+<li>如果没有达到你定的目标，调节相应参数，回到步骤2</li>
+</ol>
+<p>过一段时间我会专门写一篇关于如何调节GC参数的文章并用具体的实例来演示整个过程。</p>
+<p>还有一点就是：上面的垃圾收集器中我并没有提到Garbage-First(G1) Garbage Collector，Oracle官方的计划就是让G1收集器完全取代CMS Collector.  在2009年的JavaOne大会上，Sun公司发布了Java SE 6 Update 14，在这个JDK的版本中包括了万众瞩目的G1收集器。G1是一个low-pause、low-latency的一款收集器，你可以给它设置一个停止时间，它会尽量去满足你的这个时间。<strong>注意：它不能保证达到这个目标。</strong> 如果你的CMS收集器目前没有问题，你完全没有理由用这个收集器。这里，我给大家一篇文章，它详细地描述了G1收集器垃圾收集的细节，<a href="http://www.drdobbs.com/jvm/g1-javas-garbage-first-garbage-collector/219401061" target="_blank" rel="external">G1: Java’s Garbage First Garbage Collector</a>，我就不翻译了。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Java虚拟机/" rel="tag">#Java虚拟机</a>
+          
+            <a href="/tags/垃圾收集算法/" rel="tag">#垃圾收集算法</a>
+          
+            <a href="/tags/垃圾收集器/" rel="tag">#垃圾收集器</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/设计模式之strategy-pattern/" rel="next" title="设计模式之strategy pattern">
+                <i class="fa fa-chevron-left"></i> 设计模式之strategy pattern
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/Spring-MVC源码剖析/" rel="prev" title="Spring MVC源码剖析">
+                Spring MVC源码剖析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="Hotspot虚拟机- 垃圾收集算法和垃圾收集器/"
+           data-title="Hotspot虚拟机- 垃圾收集算法和垃圾收集器" data-url="http://Xurtle.me/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/me.jpg"
+               alt="Xurtle" />
+          <p class="site-author-name" itemprop="name">Xurtle</p>
+          <p class="site-description motion-element" itemprop="description">做尽人事 才可以看天命</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/hanxlinsist" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/hacker4long" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#引言"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是垃圾收集？"><span class="nav-number">2.</span> <span class="nav-text">什么是垃圾收集？</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Mark-and-Sweep"><span class="nav-number">3.</span> <span class="nav-text">Mark and Sweep</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#理想的垃圾收集器特性"><span class="nav-number">4.</span> <span class="nav-text">理想的垃圾收集器特性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分代收集（Generational-Collection）相关概念"><span class="nav-number">5.</span> <span class="nav-text">分代收集（Generational Collection）相关概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Generational-Hypothesis"><span class="nav-number">5.1.</span> <span class="nav-text">Generational Hypothesis</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#年轻代"><span class="nav-number">5.2.</span> <span class="nav-text">年轻代</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#老年代"><span class="nav-number">5.3.</span> <span class="nav-text">老年代</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#永久代"><span class="nav-number">5.4.</span> <span class="nav-text">永久代</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Metaspace"><span class="nav-number">5.5.</span> <span class="nav-text">Metaspace</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#垃圾收集算法的种类"><span class="nav-number">6.</span> <span class="nav-text">垃圾收集算法的种类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Serial-vs-Parallel"><span class="nav-number">6.1.</span> <span class="nav-text">Serial vs Parallel</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Concurrent-versus-Stop-the-world"><span class="nav-number">6.2.</span> <span class="nav-text">Concurrent versus Stop-the-world</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Compacting-versus-Non-compacting-versus-Copying"><span class="nav-number">6.3.</span> <span class="nav-text">Compacting versus Non-compacting versus Copying</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#性能指标"><span class="nav-number">7.</span> <span class="nav-text">性能指标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#垃圾收集类型"><span class="nav-number">8.</span> <span class="nav-text">垃圾收集类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#minor-gc"><span class="nav-number">8.1.</span> <span class="nav-text">minor gc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#full-gc"><span class="nav-number">8.2.</span> <span class="nav-text">full gc</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Hotspot虚拟机中的垃圾收集器"><span class="nav-number">9.</span> <span class="nav-text">Hotspot虚拟机中的垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#serial-collector"><span class="nav-number">9.1.</span> <span class="nav-text">serial collector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#serial-collector之年轻代收集"><span class="nav-number">9.1.1.</span> <span class="nav-text">serial collector之年轻代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#serial-collector之老年代收集"><span class="nav-number">9.1.2.</span> <span class="nav-text">serial collector之老年代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候使用serial-collector"><span class="nav-number">9.1.3.</span> <span class="nav-text">什么时候使用serial collector</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Parallel-Collector"><span class="nav-number">9.2.</span> <span class="nav-text">Parallel Collector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Collector之年轻代收集"><span class="nav-number">9.2.1.</span> <span class="nav-text">Parallel Collector之年轻代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Collector之老年代收集"><span class="nav-number">9.2.2.</span> <span class="nav-text">Parallel Collector之老年代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候使用Parallel-Collector"><span class="nav-number">9.2.3.</span> <span class="nav-text">什么时候使用Parallel Collector</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Parallel-Compacting-Collector"><span class="nav-number">9.3.</span> <span class="nav-text">Parallel Compacting Collector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Compacting-Collector之年轻代收集"><span class="nav-number">9.3.1.</span> <span class="nav-text">Parallel Compacting Collector之年轻代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Parallel-Compacting-Collector之老年代收集"><span class="nav-number">9.3.2.</span> <span class="nav-text">Parallel Compacting Collector之老年代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候使用Parallel-Compacting-Collector"><span class="nav-number">9.3.3.</span> <span class="nav-text">什么时候使用Parallel Compacting Collector</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Concurrent-Mark-Sweep-CMS-Collector"><span class="nav-number">9.4.</span> <span class="nav-text">Concurrent Mark-Sweep (CMS) Collector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS-Collector之年轻代收集"><span class="nav-number">9.4.1.</span> <span class="nav-text">CMS Collector之年轻代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CMS-Collector之老年代收集"><span class="nav-number">9.4.2.</span> <span class="nav-text">CMS Collector之老年代收集</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#什么时候使用CMS-Collector"><span class="nav-number">9.4.3.</span> <span class="nav-text">什么时候使用CMS Collector</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">10.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xurtle</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"hanxlinsist"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,691 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="strategy设计模式," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="strategy pattern的定义
+定义一组算法，分别封装起来，让它们之间可以互相替换。Strategy pattern让算法的变化独立于使用它的客户端。
+在接口中定义抽象，在它的derived类中实现相应的细节。
+
+在面向对象程序设计中，其中一个重要的原则就是针对接口编程，不要去针对实现编程。 下图说明了怎样实现这个原则：
+
+从上图可以看出：在接口中封装抽象，在它的derived类中实现相应">
+<meta property="og:type" content="article">
+<meta property="og:title" content="设计模式之strategy pattern">
+<meta property="og:url" content="http://Xurtle.me/设计模式之strategy-pattern/index.html">
+<meta property="og:site_name" content="Xurtle">
+<meta property="og:description" content="strategy pattern的定义
+定义一组算法，分别封装起来，让它们之间可以互相替换。Strategy pattern让算法的变化独立于使用它的客户端。
+在接口中定义抽象，在它的derived类中实现相应的细节。
+
+在面向对象程序设计中，其中一个重要的原则就是针对接口编程，不要去针对实现编程。 下图说明了怎样实现这个原则：
+
+从上图可以看出：在接口中封装抽象，在它的derived类中实现相应">
+<meta property="og:image" content="http://Xurtle.me/设计模式之strategy-pattern/1st.svg">
+<meta property="og:updated_time" content="2016-10-17T02:27:41.256Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="设计模式之strategy pattern">
+<meta name="twitter:description" content="strategy pattern的定义
+定义一组算法，分别封装起来，让它们之间可以互相替换。Strategy pattern让算法的变化独立于使用它的客户端。
+在接口中定义抽象，在它的derived类中实现相应的细节。
+
+在面向对象程序设计中，其中一个重要的原则就是针对接口编程，不要去针对实现编程。 下图说明了怎样实现这个原则：
+
+从上图可以看出：在接口中封装抽象，在它的derived类中实现相应">
+<meta name="twitter:image" content="http://Xurtle.me/设计模式之strategy-pattern/1st.svg">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://Xurtle.me/设计模式之strategy-pattern/"/>
+
+  <title> 设计模式之strategy pattern | Xurtle </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Xurtle</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                设计模式之strategy pattern
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-09-30T22:41:00+08:00" content="2016-09-30">
+              2016-09-30
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/设计模式/" itemprop="url" rel="index">
+                    <span itemprop="name">设计模式</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/设计模式之strategy-pattern/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="设计模式之strategy-pattern/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="strategy-pattern的定义"><a href="#strategy-pattern的定义" class="headerlink" title="strategy pattern的定义"></a>strategy pattern的定义</h1><ul>
+<li>定义一组算法，分别封装起来，让它们之间可以互相替换。Strategy pattern让算法的变化独立于使用它的客户端。</li>
+<li>在接口中定义抽象，在它的derived类中实现相应的细节。</li>
+</ul>
+<p>在面向对象程序设计中，其中一个重要的原则就是<strong>针对接口编程，不要去针对实现编程。</strong> 下图说明了怎样实现这个原则：</p>
+<img src="/设计模式之strategy-pattern/1st.svg" alt="strategy pattern" title="strategy pattern">
+<p>从上图可以看出：在接口中封装抽象，在它的derived类中实现相应的细节。Client针对接口编程，当derived类的数量改变时，Client代码不受影响;当derived类的实现细节改变时，Client代码同样也不受影响。</p>
+<p>利用strategy pattern可以很好地针对这样的原则去编程。下面我来用具体的代码举个例子。</p>
+<a id="more"></a>
+<h1 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h1><p>相信大家都去KFC吃过东西吧。那么现在KFC有个活动，第一杯可乐正常价格，之后的每杯可乐都是半价。针对这个业务需求，我设计一个结账策略接口，它封装了getActPrice方法，代码如下：</p>
+<figure class="highlight java"><figcaption><span>strategy pattern</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">BillingStrategy</span> </span>&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPrice</span><span class="params">(<span class="keyword">double</span> rawPrice)</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>由于有两种价格策略，因此这里我写两个derived类，并分别实现具体的细节。</p>
+<figure class="highlight java"><figcaption><span>strategy pattern</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="comment">// 正常价格策略</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">NormalStrategy</span> <span class="keyword">implements</span> <span class="title">BillingStrategy</span> </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPrice</span><span class="params">(<span class="keyword">double</span> rawPrice)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> rawPrice;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">// 半价策略</span></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">HalfStrategy</span> <span class="keyword">implements</span> <span class="title">BillingStrategy</span> </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">getPrice</span><span class="params">(<span class="keyword">double</span> rawPrice)</span> </span>&#123;</div><div class="line">        <span class="comment">// 为了方便我把0.5写死了，现实应用中，可以定义常量</span></div><div class="line">        <span class="keyword">return</span> rawPrice * <span class="number">0.5</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>现在，让我们设计顾客实体。</p>
+<figure class="highlight java"><figcaption><span>strategy pattern</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> java.util.LinkedList;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Customer</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> List&lt;Double&gt; drinks; <span class="comment">// 存储客户每杯可乐的价格</span></div><div class="line">    <span class="keyword">private</span> BillingStrategy strategy; <span class="comment">// 针对接口编程</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Customer</span><span class="params">(BillingStrategy strategy)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.drinks = <span class="keyword">new</span> LinkedList&lt;Double&gt;();</div><div class="line">        <span class="keyword">this</span>.strategy = strategy;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(<span class="keyword">double</span> price)</span> </span>&#123;</div><div class="line">        drinks.add(strategy.getPrice(price));</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 打印客户购买可乐的总价格</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">printBill</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">double</span> sum = <span class="number">0</span>;</div><div class="line">        <span class="keyword">for</span> (Double i : drinks) &#123;</div><div class="line">            sum += i;</div><div class="line">        &#125;</div><div class="line">        System.out.println(<span class="string">"总价格为: "</span> + sum);</div><div class="line">        drinks.clear();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 由于客户可能会买很多杯可乐，这个方法可以改变用户的价格策略</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setStrategy</span><span class="params">(BillingStrategy strategy)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.strategy = strategy;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>假设我们每杯可乐的原始价格为10元，现在有一个客户买了3杯可乐，现在让我们算一算他总共需要付多少钱吧？</p>
+<figure class="highlight java"><figcaption><span>strategy pattern</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">StrategyPattern</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">        Customer customer = <span class="keyword">new</span> Customer(<span class="keyword">new</span> NormalStrategy()); <span class="comment">// 正常价格策略</span></div><div class="line">        customer.add(<span class="number">10.0</span>);</div><div class="line"></div><div class="line">        <span class="comment">// 第二杯和第三杯采用半价策略</span></div><div class="line">        customer.setStrategy(<span class="keyword">new</span> HalfStrategy());</div><div class="line">        customer.add(<span class="number">10.0</span>);</div><div class="line">        customer.add(<span class="number">10.0</span>);</div><div class="line"></div><div class="line">        customer.printBill();</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>至此，整个例子已经演示完了。大家可以认真想一想，用Strategy Pattern设计的好处是什么呢？如果未来某一天，我们推出个新的价格活动，比如第三杯1/4价格，我们只需要写一个价格类实现BillingStrategy接口就行了，并不需要去修改客户端的代码。这大大降低了我们软件的维护成本。</p>
+<h1 id="Java中用到Strategy-Pattern的地方"><a href="#Java中用到Strategy-Pattern的地方" class="headerlink" title="Java中用到Strategy Pattern的地方"></a>Java中用到Strategy Pattern的地方</h1><p><a href="http://docs.oracle.com/javase/8/docs/api/java/util/Comparator.html#compare-T-T-" target="_blank" rel="external">java.util.Comparator#compare()</a> 与 <a href="https://docs.oracle.com/javase/7/docs/api/java/util/Collections.html#sort(java.util.List,%20java.util.Comparator" target="_blank" rel="external">Collections#sort()</a></p>
+<p>下面我举个关于这个Java API的例子。</p>
+<figure class="highlight java"><figcaption><span>strategy pattern</span></figcaption><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> strategy_pattern;</div><div class="line"></div><div class="line"><span class="keyword">import</span> java.util.Collections;</div><div class="line"><span class="keyword">import</span> java.util.Comparator;</div><div class="line"><span class="keyword">import</span> java.util.LinkedList;</div><div class="line"><span class="keyword">import</span> java.util.List;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SortList</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">		List&lt;Integer&gt; list = <span class="keyword">new</span> LinkedList&lt;Integer&gt;();</div><div class="line">		list.add(<span class="number">9</span>);</div><div class="line">		list.add(<span class="number">2</span>);</div><div class="line">		list.add(<span class="number">1</span>);</div><div class="line">		list.add(<span class="number">64</span>);</div><div class="line">		list.add(<span class="number">18</span>);</div><div class="line">		</div><div class="line">		Collections.sort(list, <span class="keyword">new</span> FromSmallToLarge());</div><div class="line">		System.out.println(list);</div><div class="line">		</div><div class="line">		Collections.sort(list, <span class="keyword">new</span> FromLargeToSmall());</div><div class="line">		System.out.println(list);</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">FromSmallToLarge</span> <span class="keyword">implements</span> <span class="title">Comparator</span>&lt;<span class="title">Integer</span>&gt; </span>&#123;</div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Integer num1, Integer num2)</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> num1 - num2;</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">FromLargeToSmall</span> <span class="keyword">implements</span> <span class="title">Comparator</span>&lt;<span class="title">Integer</span>&gt; </span>&#123;</div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Integer num1, Integer num2)</span> </span>&#123;</div><div class="line">		<span class="keyword">return</span> num2 - num1;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接口Comparator只定义了Sort方法的抽象，我们可以定义不同的derived类分别实现各自不同的sort细节。而Collections的sort方法定义方法签名并不需要提前知道具体的sort细节，它只需要定义Comparator接口，具体的实现会等到运行时找相应的derived类实现，这是一个很漂亮的例子，非常值得学习。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/strategy设计模式/" rel="tag">#strategy设计模式</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/" rel="prev" title="Hotspot虚拟机- 垃圾收集算法和垃圾收集器">
+                Hotspot虚拟机- 垃圾收集算法和垃圾收集器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="设计模式之strategy-pattern/"
+           data-title="设计模式之strategy pattern" data-url="http://Xurtle.me/设计模式之strategy-pattern/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/me.jpg"
+               alt="Xurtle" />
+          <p class="site-author-name" itemprop="name">Xurtle</p>
+          <p class="site-description motion-element" itemprop="description">做尽人事 才可以看天命</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">11</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/hanxlinsist" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/hacker4long" target="_blank" title="微博">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  微博
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#strategy-pattern的定义"><span class="nav-number">1.</span> <span class="nav-text">strategy pattern的定义</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Example"><span class="nav-number">2.</span> <span class="nav-text">Example</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java中用到Strategy-Pattern的地方"><span class="nav-number">3.</span> <span class="nav-text">Java中用到Strategy Pattern的地方</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xurtle</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.0.1"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"hanxlinsist"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    <script src="/vendors/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
