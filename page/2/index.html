@@ -248,6 +248,136 @@
             
               
                 
+                <a class="post-title-link" href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/" itemprop="url">
+                  Hotspot虚拟机- 垃圾收集算法和垃圾收集器
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-10-02T20:44:00+08:00" content="2016-10-02">
+              2016-10-02
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="Hotspot虚拟机- 垃圾收集算法和垃圾收集器/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>当提到Java虚拟机的时候，我们首先应该区分2件事情。一个是抽象的<a href="https://docs.oracle.com/javase/specs/jvms/se7/html/">Java虚拟机规范</a>，另一个是根据这个规范具体的实现。市面上有很多根据这个规范实现的虚拟机，比如jRockit、IBM J9、Hotspot等。那么在这篇文章中，我只介绍关于Hotspot虚拟机的行为，以及它里面提供的垃圾收集器。</p>
+<h1 id="什么是垃圾收集？"><a href="#什么是垃圾收集？" class="headerlink" title="什么是垃圾收集？"></a>什么是垃圾收集？</h1><p>相信每一个现实中生活的人都知道什么是垃圾收集。顾名思义，就是找到没有用的东西（垃圾）并把它扔掉。但是，在JVM中的垃圾收集是完全相反的，它首先找到所有仍然使用的对象并标记下来，然后清理掉没有标记的垃圾。</p>
+<p>那么对于一个垃圾收集器来说，它主要有三个工作需要完成：</p>
+<ol>
+<li>分配内存</li>
+<li>确保任何被引用的对象在内存中，不被垃圾收集器收集</li>
+<li>释放不再使用的对象的内存</li>
+</ol>
+<p>被引用的对象我们称它是活着的（live），不再被引用的对象我们称它为死的（dead），或垃圾。找到并释放这些垃圾的过程叫做<strong>垃圾收集</strong>。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/Hotspot虚拟机- 垃圾收集算法和垃圾收集器/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
                 <a class="post-title-link" href="/设计模式之strategy-pattern/" itemprop="url">
                   设计模式之strategy pattern
                 </a>
@@ -401,7 +531,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-count">5</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
